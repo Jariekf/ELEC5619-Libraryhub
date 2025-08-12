@@ -25,19 +25,17 @@ Project Overview: This project addresses the problem of managing the status of d
 
 
 ## Roles & Responsibilities
-The developer role involves frontend, backend, and devops development. It also includes the design of technical & product documents that detail the architecture of this project and the key requirements of the system.
-
 ### Project Manager - Tinghui Chen
-Arrange meeting time; Plan and oversee integration; Deep understanding of library operations, patron needs, and circulation workflows
+Arranges meeting time, plans and oversee the code integration, and develops a deep understanding of the library requirements.
 
 ### Technical Leader - Leon Lei
-Design the overall technical architecture for reservation management and review systems; Ensure code quality and mentor other developers;
+Designs the overall technical architecture for reservation management and reviews systems. Also ensures the code quality is high and mentors other developers.
 
 ### Frontend Developer - Ruijia Jia
-Build responsive web interfaces; Build reusable UI components; Ensure the platform meets accessibility standards; Design user cases;
+Builds a responsive web interface, reusable UI components, and ennsures the platform meets accessibility standards.
 
 ### Backend Developer - Charity Wang
-Design and optimize databases for book catalogs, user data, reviews, and reservation tracking; Ensure system handles peak loads during popular book releases; Cross-Functional testing;
+Designs and optimises databases for book catalogs, user data, reviews, and reservation tracking. Also ensures the system handles peak loads during popular book releases.
 
 ### DevOps Engineer - Shuchita Prakash
-Set up and maintain cloud infrastructure; Automate testing, deployment, and monitoring processes;Implement robust data backup and disaster recovery procedures;
+Sets up and maintains cloud infrastructure as well as setting up automated testing, deployment, and monitoring processes. Also implements robust data backup and disaster recovery procedures.
