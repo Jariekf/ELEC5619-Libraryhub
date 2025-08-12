@@ -27,16 +27,16 @@ Project Overview: This project addresses the problem of managing the status of d
 ## Roles & Responsibilities
 The developer role involves frontend, backend, and devops development. It also includes the design of technical & product documents that detail the architecture of this project and the key requirements of the system.
 
-### Project Manager - 
+### Project Manager - Tinghui Chen
 Arrange meeting time; Plan and oversee integration; Deep understanding of library operations, patron needs, and circulation workflows
 
 ### Technical Leader - Leon Lei
 Design the overall technical architecture for reservation management and review systems; Ensure code quality and mentor other developers;
 
-### Frontend Developer - 
+### Frontend Developer - Ruijia Jia
 Build responsive web interfaces; Build reusable UI components; Ensure the platform meets accessibility standards; Design user cases;
 
-### Backend Developer -
+### Backend Developer - Charity Wang
 Design and optimize databases for book catalogs, user data, reviews, and reservation tracking; Ensure system handles peak loads during popular book releases; Cross-Functional testing;
 
 ### DevOps Engineer - Shuchita Prakash
