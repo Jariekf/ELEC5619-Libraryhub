@@ -34,10 +34,10 @@ Arrange meeting time; Plan and oversee integration; Deep understanding of librar
 Design the overall technical architecture for reservation management and review systems; Ensure code quality and mentor other developers;
 
 ### Frontend Developer - 
-Build responsive web interfaces; Build reusable UI components; Ensure the platform meets accessibility standards;
+Build responsive web interfaces; Build reusable UI components; Ensure the platform meets accessibility standards; Design user cases;
 
 ### Backend Developer -
-Design and optimize databases for book catalogs, user data, reviews, and reservation tracking; Ensure system handles peak loads during popular book releases;
+Design and optimize databases for book catalogs, user data, reviews, and reservation tracking; Ensure system handles peak loads during popular book releases; Cross-Functional testing;
 
 ### DevOps Engineer - Shuchita Prakash
 Set up and maintain cloud infrastructure; Automate testing, deployment, and monitoring processes;Implement robust data backup and disaster recovery procedures;
