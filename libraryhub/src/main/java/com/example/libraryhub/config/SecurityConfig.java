@@ -40,40 +40,41 @@ public class SecurityConfig {
         return (String username) -> {
             User u = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            // Set authorities by role; here we use ADMIN for Admin subclass, otherwise CUSTOMER
+            // Set authorities by role; here we use ADMIN for Admin subclass, otherwise
+            // CUSTOMER
             String role = (u instanceof Admin) ? "ADMIN" : "CUSTOMER";
             UserDetails details = org.springframework.security.core.userdetails.User
                     .withUsername(u.getUsername())
-                    .password(u.getPasswordHash())   // ensure your User has getPasswordHash()
-                    .roles(role)                     // results in "ROLE_ADMIN"/"ROLE_CUSTOMER"
+                    .password(u.getPasswordHash()) // ensure your User has getPasswordHash()
+                    .roles(role) // results in "ROLE_ADMIN"/"ROLE_CUSTOMER"
                     .disabled(!u.isActive())
                     .build();
             return details;
         };
     }
 
-    /** HTTP security: allow auth pages, require login elsewhere, enable form login + logout. */
+    /**
+     * HTTP security: allow auth pages, require login elsewhere, enable form login +
+     * logout.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/**")) // simple forms; tune later
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/auth/login").permitAll()
-                        .loginProcessingUrl("/auth/login")                // POST endpoint handled by Spring
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/auth/login?error")
-                )
+                        .loginProcessingUrl("/auth/login") // POST endpoint handled by Spring
+                        .defaultSuccessUrl("/books", true)
+                        .failureUrl("/auth/login?error"))
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout")                        // POST /auth/logout
+                        .logoutUrl("/auth/logout") // POST /auth/logout
                         .logoutSuccessUrl("/auth/login?logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
-                        .permitAll()
-                );
+                        .permitAll());
         return http.build();
     }
 }
