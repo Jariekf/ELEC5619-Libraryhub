@@ -6,6 +6,7 @@ import com.example.libraryhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -63,6 +64,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/**")) // simple forms; tune later
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
+                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/auth/login").permitAll()

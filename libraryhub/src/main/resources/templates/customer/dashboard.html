@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Reservations</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>My Reserved Books</h1>
+
+    <div th:if="${reservations.isEmpty()}" class="alert alert-info mt-3">
+        <p>You have no reserved books.</p>
+    </div>
+
+    <div th:unless="${reservations.isEmpty()}" class="list-group mt-3">
+        <div th:each="reservation : ${reservations}" class="list-group-item">
+            <h5 class="mb-1" th:text="${reservation.book.title}">Book Title</h5>
+            <p class="mb-1">by <span th:text="${reservation.book.author}">Author</span></p>
+            <small>Reserved on: <span th:text="${#temporals.format(reservation.reservationDate, 'dd-MMM-yyyy HH:mm')}"></span></small>
+        </div>
+    </div>
+    <a th:href="@{/books}" class="btn btn-primary mt-3">Browse More Books</a>
+</div>
+</body>
+</html>
