@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, ~{::.content})}">
+<head>
+    <meta charset="UTF-8">
+    <title>All Reservations</title>
+</head>
+<body>
+<div class="content">
+    <h2 class="mb-3">All Book Reservations</h2>
+
+    <div th:if="${reservations.isEmpty()}" class="alert alert-info">
+        <p>There are currently no reservations.</p>
+    </div>
+
+    <div th:unless="${reservations.isEmpty()}">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+            <tr>
+                <th>Book Title</th>
+                <th>Author</th>
+                <th>Reserved By</th>
+                <th>Reserved On</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="reservation : ${reservations}">
+                <td th:text="${reservation.book.title}">To Kill a Mockingbird</td>
+                <td th:text="${reservation.book.author}">Harper Lee</td>
+                <td th:text="${reservation.user.username}">customer1</td>
+                <td th:text="${#temporals.format(reservation.reservationDate, 'dd-MMM-yyyy HH:mm')}">01-Jan-2024 10:30</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

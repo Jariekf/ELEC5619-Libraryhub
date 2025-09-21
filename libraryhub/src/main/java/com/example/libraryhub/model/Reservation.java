@@ -2,13 +2,20 @@ package com.example.libraryhub.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
+@ToString(of = { "id", "reservationDate" })
+@EqualsAndHashCode(of = "id")
 public class Reservation {
 
     @Id

@@ -25,6 +25,12 @@
                 <span th:unless="${book.available}" class="text-danger font-weight-bold">Not Available</span>
             </p>
 
+            <!-- Admin-only view to see who reserved the book -->
+            <div th:if="${reservation != null}" sec:authorize="hasRole('ADMIN')" class="alert alert-info mt-3">
+                <p class="mb-0"><strong>Reserved by:</strong> <span
+                        th:text="${reservation.user.username}">customer_username</span></p>
+            </div>
+
             <!-- Reservation Button: Only shown to users with the 'CUSTOMER' role -->
             <div sec:authorize="hasRole('CUSTOMER')">
                 <form th:action="@{/books/{id}/reserve(id=${book.id})}" method="post" class="mt-3">
@@ -34,6 +40,12 @@
         </div>
         <div class="card-footer">
             <a th:href="@{/books}" class="btn btn-secondary">Back to Book List</a>
+            <!-- Link to Admin Dashboard, only shown to ADMIN roles -->
+            <a th:href="@{/admin/dashboard}"
+               sec:authorize="hasRole('ADMIN')"
+               class="btn btn-warning">
+                Admin Dashboard
+            </a>
         </div>
     </div>
 </div>

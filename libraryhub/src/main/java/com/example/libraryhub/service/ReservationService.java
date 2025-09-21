@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,5 +47,13 @@ public class ReservationService {
      */
     public List<Reservation> getReservationsForUser(String username) {
         return reservationRepository.findWithBookByUser_Username(username);
+    }
+
+    public List<Reservation> getAllReservations() {
+        return reservationRepository.findAllWithDetails();
+    }
+
+    public Optional<Reservation> getReservationForBook(Long bookId) {
+        return reservationRepository.findByBookIdWithUser(bookId);
     }
 }

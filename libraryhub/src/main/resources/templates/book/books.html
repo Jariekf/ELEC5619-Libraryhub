@@ -17,6 +17,13 @@
         My Reservations
       </a>
 
+      <!-- Link to Admin Dashboard, only shown to ADMIN roles -->
+      <a th:href="@{/admin/dashboard}"
+         sec:authorize="hasRole('ADMIN')"
+         class="btn btn-warning ms-2">
+        Admin Dashboard
+      </a>
+
       <!-- Logout Form, shown to any authenticated user -->
       <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()" class="d-inline ms-2">
         <button type="submit" class="btn btn-outline-danger">Logout</button>

@@ -38,9 +38,10 @@ public class SecurityConfig {
     /** Load user from database and map to Spring Security UserDetails. */
     @Bean
     public UserDetailsService userDetailsService() {
-        return (String username) -> {
-            User u = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return (String loginIdentifier) -> {
+            User u = userRepository.findByUsername(loginIdentifier)
+                    .or(() -> userRepository.findByEmail(loginIdentifier))
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + loginIdentifier));
             // Set authorities by role; here we use ADMIN for Admin subclass, otherwise
             // CUSTOMER
             String role = (u instanceof Admin) ? "ADMIN" : "CUSTOMER";
@@ -66,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
                         .requestMatchers("/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/auth/login").permitAll()

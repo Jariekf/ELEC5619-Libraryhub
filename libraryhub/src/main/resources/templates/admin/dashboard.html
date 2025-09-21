@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, ~{::.content})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+<div class="content">
+    <h2 class="mb-4">Welcome to the Admin Dashboard</h2>
+    <div class="list-group">
+        <a th:href="@{/admin/reservations}" class="list-group-item list-group-item-action">
+            <h5 class="mb-1">View All Reservations</h5>
+            <p class="mb-1">See a complete list of all books that are currently reserved.</p>
+        </a>
+        <a th:href="@{/admin/customers}" class="list-group-item list-group-item-action">
+            <h5 class="mb-1">View All Customers</h5>
+            <p class="mb-1">Browse a list of all registered customers and the books they have reserved.</p>
+        </a>
+    </div>
+</div>
+</body>
+</html>

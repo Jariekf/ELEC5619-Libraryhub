@@ -27,8 +27,13 @@ public class BookController {
 
     @GetMapping("/{id}")
     public String bookDetails(@PathVariable Long id, Model model) {
-        model.addAttribute("book", bookService.getBookById(id));
-        return "book/book-details"; // Thymeleaf template name: book-details.html
+        Book book = bookService.getBookById(id);
+        model.addAttribute("book", book);
+        if (book != null && !book.isAvailable()) {
+            reservationService.getReservationForBook(id)
+                    .ifPresent(reservation -> model.addAttribute("reservation", reservation));
+        }
+        return "book/book-details";
     }
 
     @PostMapping("/search")
