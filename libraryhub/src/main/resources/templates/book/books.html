@@ -9,12 +9,19 @@
 <div class="container mt-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="text-primary fw-bold mb-0">📚 Library Books</h1>
-    <!-- Link to Customer Dashboard, only shown to CUSTOMER roles -->
-    <a th:href="@{/customer/dashboard}"
-       sec:authorize="hasRole('CUSTOMER')"
-       class="btn btn-info">
-      My Reservations
-    </a>
+    <div>
+      <!-- Link to Customer Dashboard, only shown to CUSTOMER roles -->
+      <a th:href="@{/customer/dashboard}"
+         sec:authorize="hasRole('CUSTOMER')"
+         class="btn btn-info">
+        My Reservations
+      </a>
+
+      <!-- Logout Form, shown to any authenticated user -->
+      <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()" class="d-inline ms-2">
+        <button type="submit" class="btn btn-outline-danger">Logout</button>
+      </form>
+    </div>
   </div>
 
   <!-- Search Form -->
