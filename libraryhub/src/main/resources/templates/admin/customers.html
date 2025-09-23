@@ -35,9 +35,8 @@
                     </div>
                     <ul th:unless="${customer.reservations.isEmpty()}" class="list-group">
                         <li th:each="reservation : ${customer.reservations}" class="list-group-item d-flex justify-content-between align-items-center">
-                            <span th:text="${reservation.book.title}">Book Title</span>
-                            <small class="text-muted">Reserved on: <span
-                                    th:text="${#temporals.format(reservation.reservationDate, 'dd-MMM-yyyy')}"></span></small>
+                            <span th:text="${reservation.book?.title}">Book Title</span>
+                            <small class="text-muted">Reserved on: <span th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd-MMM-yyyy') : ''}"></span></small>
                         </li>
                     </ul>
                 </div>

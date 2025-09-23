@@ -25,10 +25,10 @@
             </thead>
             <tbody>
             <tr th:each="reservation : ${reservations}">
-                <td th:text="${reservation.book.title}">To Kill a Mockingbird</td>
-                <td th:text="${reservation.book.author}">Harper Lee</td>
-                <td th:text="${reservation.user.username}">customer1</td>
-                <td th:text="${#temporals.format(reservation.reservationDate, 'dd-MMM-yyyy HH:mm')}">01-Jan-2024 10:30</td>
+                <td th:text="${reservation.book?.title}">To Kill a Mockingbird</td>
+                <td th:text="${reservation.book?.author}">Harper Lee</td>
+                <td th:text="${reservation.user?.username}">customer1</td>
+                <td th:text="${reservation.reservationDate != null ? #temporals.format(reservation.reservationDate, 'dd-MMM-yyyy HH:mm') : ''}">01-Jan-2024 10:30</td>
             </tr>
             </tbody>
         </table>

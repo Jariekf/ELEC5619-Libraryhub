@@ -26,10 +26,14 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public String bookDetails(@PathVariable Long id, Model model) {
+    public String bookDetails(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         Book book = bookService.getBookById(id);
+        if (book == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+            return "redirect:/books";
+        }
         model.addAttribute("book", book);
-        if (book != null && !book.isAvailable()) {
+        if (!book.isAvailable()) {
             reservationService.getReservationForBook(id)
                     .ifPresent(reservation -> model.addAttribute("reservation", reservation));
         }

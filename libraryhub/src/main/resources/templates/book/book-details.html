@@ -26,7 +26,7 @@
             </p>
 
             <!-- Admin-only view to see who reserved the book -->
-            <div th:if="${reservation != null}" sec:authorize="hasRole('ADMIN')" class="alert alert-info mt-3">
+            <div th:if="${reservation != null && reservation.user != null}" sec:authorize="hasRole('ADMIN')" class="alert alert-info mt-3">
                 <p class="mb-0"><strong>Reserved by:</strong> <span
                         th:text="${reservation.user.username}">customer_username</span></p>
             </div>

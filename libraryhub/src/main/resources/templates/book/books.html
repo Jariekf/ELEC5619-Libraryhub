@@ -31,8 +31,12 @@
     </div>
   </div>
 
+  <!-- Display success/error messages from the controller -->
+  <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}"></div>
+  <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+
   <!-- Search Form -->
-  <form action="/books/search" method="post" class="d-flex mb-4">
+  <form th:action="@{/books/search}" method="post" class="d-flex mb-4">
     <input type="text" name="title" placeholder="Search by title" class="form-control me-2"/>
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
