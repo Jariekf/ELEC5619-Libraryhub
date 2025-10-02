@@ -141,4 +141,30 @@ public class BookController {
         
         return "redirect:/books/" + bookId;
     }
+
+    @PostMapping("/admin/books/{bookId}/reviews/{reviewId}/delete")
+    public String adminDeleteReview(@PathVariable Long bookId,
+                                   @PathVariable Long reviewId,
+                                   @AuthenticationPrincipal UserDetails userDetails,
+                                   RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
+        
+        // Check if user has ADMIN role
+        if (!userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only administrators can delete any review.");
+            return "redirect:/books/" + bookId;
+        }
+        
+        try {
+            reviewService.deleteReview(reviewId);
+            redirectAttributes.addFlashAttribute("successMessage", "Review deleted successfully by administrator!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete review. Please try again.");
+        }
+        
+        return "redirect:/books/" + bookId;
+    }
 }
