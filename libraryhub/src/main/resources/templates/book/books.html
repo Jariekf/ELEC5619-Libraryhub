@@ -10,6 +10,13 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="text-primary fw-bold mb-0">📚 Library Books</h1>
     <div>
+      <!-- Add Book Button, only shown to ADMIN roles -->
+      <a th:href="@{/books/add}"
+         sec:authorize="hasRole('ADMIN')"
+         class="btn btn-success me-2">
+        ➕ Add Book
+      </a>
+
       <!-- Link to Customer Dashboard, only shown to CUSTOMER roles -->
       <a th:href="@{/customer/dashboard}"
          sec:authorize="hasRole('CUSTOMER')"
@@ -54,8 +61,50 @@
           <p class="card-text mb-1"><strong>Author:</strong> <span th:text="${book.author}">Author</span></p>
           <p class="card-text"><strong>Genre:</strong> <span th:text="${book.genre}">Genre</span></p>
         </div>
-        <div class="card-footer bg-transparent border-0 text-end">
-          <a th:href="@{'/books/' + ${book.id}}" class="btn btn-outline-primary btn-sm">View Details</a>
+        <div class="card-footer bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <a th:href="@{'/books/' + ${book.id}}" class="btn btn-outline-primary btn-sm">View Details</a>
+            
+            <!-- Admin Controls -->
+            <div sec:authorize="hasRole('ADMIN')" class="btn-group" role="group">
+              <a th:href="@{'/books/admin/edit/' + ${book.id}}" class="btn btn-outline-warning btn-sm">✏️ Edit</a>
+              <button type="button" class="btn btn-outline-danger btn-sm" 
+                      th:data-bs-toggle="'modal'" 
+                      th:data-bs-target="'#deleteModal' + ${book.id}">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modals for each book -->
+<div th:each="book : ${books}" th:if="${book != null}">
+  <div class="modal fade" th:id="'deleteModal' + ${book.id}" tabindex="-1" th:aria-labelledby="'deleteModalLabel' + ${book.id}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" th:id="'deleteModalLabel' + ${book.id}">Confirm Book Deletion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this book?</p>
+          <p class="text-danger"><strong>Warning:</strong> This action will permanently delete:</p>
+          <ul class="text-danger">
+            <li>The book: <strong th:text="${book.title}">Book Title</strong></li>
+            <li>All reviews for this book</li>
+            <li>All reservations for this book</li>
+          </ul>
+          <p class="text-danger">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <form th:action="@{'/books/admin/delete/' + ${book.id}}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-danger">Delete Book</button>
+          </form>
         </div>
       </div>
     </div>

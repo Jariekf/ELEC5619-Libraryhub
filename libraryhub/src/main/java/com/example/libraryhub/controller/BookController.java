@@ -167,4 +167,85 @@ public class BookController {
         
         return "redirect:/books/" + bookId;
     }
+
+    // Admin Book Management Endpoints
+    
+    @GetMapping("/admin/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model, 
+                              @AuthenticationPrincipal UserDetails userDetails,
+                              RedirectAttributes redirectAttributes) {
+        if (userDetails == null || !userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access denied. Admin privileges required.");
+            return "redirect:/books";
+        }
+        
+        Book book = bookService.getBookById(id);
+        if (book == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+            return "redirect:/books";
+        }
+        
+        model.addAttribute("book", book);
+        return "book/edit-book";
+    }
+
+    @PostMapping("/admin/edit/{id}")
+    public String updateBook(@PathVariable Long id, 
+                           @ModelAttribute("book") Book book,
+                           @AuthenticationPrincipal UserDetails userDetails,
+                           RedirectAttributes redirectAttributes) {
+        if (userDetails == null || !userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access denied. Admin privileges required.");
+            return "redirect:/books";
+        }
+        
+        Book existingBook = bookService.getBookById(id);
+        if (existingBook == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+            return "redirect:/books";
+        }
+        
+        // Update the existing book with new details
+        existingBook.setTitle(book.getTitle());
+        existingBook.setAuthor(book.getAuthor());
+        existingBook.setGenre(book.getGenre());
+        existingBook.setAvailable(book.isAvailable());
+        
+        try {
+            bookService.saveBook(existingBook);
+            redirectAttributes.addFlashAttribute("successMessage", "Book updated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to update book. Please try again.");
+        }
+        
+        return "redirect:/books";
+    }
+
+    @PostMapping("/admin/delete/{id}")
+    public String deleteBook(@PathVariable Long id,
+                           @AuthenticationPrincipal UserDetails userDetails,
+                           RedirectAttributes redirectAttributes) {
+        if (userDetails == null || !userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access denied. Admin privileges required.");
+            return "redirect:/books";
+        }
+        
+        Book book = bookService.getBookById(id);
+        if (book == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+            return "redirect:/books";
+        }
+        
+        try {
+            bookService.deleteBook(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Book and all associated data deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete book. Please try again.");
+        }
+        
+        return "redirect:/books";
+    }
 }
