@@ -66,6 +66,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/books/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/books/*/reviews/*/delete").authenticated()
                         .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())

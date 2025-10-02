@@ -1,8 +1,10 @@
 package com.example.libraryhub.controller;
 
 import com.example.libraryhub.model.Book;
+import com.example.libraryhub.model.Review;
 import com.example.libraryhub.service.BookService;
 import com.example.libraryhub.service.ReservationService;
+import com.example.libraryhub.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +20,7 @@ public class BookController {
 
     private final BookService bookService;
     private final ReservationService reservationService;
+    private final ReviewService reviewService;
 
     @GetMapping
     public String listBooks(Model model) {
@@ -33,6 +36,9 @@ public class BookController {
             return "redirect:/books";
         }
         model.addAttribute("book", book);
+        model.addAttribute("reviews", reviewService.getReviewsForBook(id));
+        model.addAttribute("averageRating", reviewService.getAverageRatingForBook(id));
+        model.addAttribute("newReview", new Review());
         if (!book.isAvailable()) {
             reservationService.getReservationForBook(id)
                     .ifPresent(reservation -> model.addAttribute("reservation", reservation));
@@ -75,5 +81,64 @@ public class BookController {
             redirectAttributes.addFlashAttribute("errorMessage", "Could not reserve book due to an unexpected error.");
         }
         return "redirect:/books/" + id;
+    }
+
+    @PostMapping("/{id}/reviews")
+    public String submitReview(@PathVariable Long id,
+                               @ModelAttribute("newReview") Review review,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
+        
+        Book book = bookService.getBookById(id);
+        if (book == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+            return "redirect:/books";
+        }
+        
+        // Validate rating
+        if (review.getRating() == null || review.getRating() < 1 || review.getRating() > 5) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Rating must be between 1 and 5 stars.");
+            return "redirect:/books/" + id;
+        }
+        
+        // Set the book and username
+        review.setBook(book);
+        review.setUsername(userDetails.getUsername());
+        
+        try {
+            reviewService.saveReview(review);
+            redirectAttributes.addFlashAttribute("successMessage", "Review submitted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to submit review. Please try again.");
+        }
+        
+        return "redirect:/books/" + id;
+    }
+
+    @PostMapping("/{bookId}/reviews/{reviewId}/delete")
+    public String deleteReview(@PathVariable Long bookId,
+                              @PathVariable Long reviewId,
+                              @AuthenticationPrincipal UserDetails userDetails,
+                              RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
+        
+        if (!reviewService.canUserDeleteReview(reviewId, userDetails.getUsername())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "You can only delete your own reviews.");
+            return "redirect:/books/" + bookId;
+        }
+        
+        try {
+            reviewService.deleteReview(reviewId);
+            redirectAttributes.addFlashAttribute("successMessage", "Review deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete review. Please try again.");
+        }
+        
+        return "redirect:/books/" + bookId;
     }
 }
