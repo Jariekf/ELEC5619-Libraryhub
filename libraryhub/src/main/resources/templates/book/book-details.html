@@ -37,6 +37,14 @@
                     <button type="submit" class="btn btn-primary" th:disabled="${!book.available}">Reserve this Book</button>
                 </form>
             </div>
+
+            <!-- Average Rating Display -->
+            <div class="mt-4" th:if="${averageRating > 0}">
+                <h5>Average Rating: 
+                    <span th:text="${#numbers.formatDecimal(averageRating, 1, 1)}">0.0</span>
+                    <span class="text-warning">★</span>
+                </h5>
+            </div>
         </div>
         <div class="card-footer">
             <a th:href="@{/books}" class="btn btn-secondary">Back to Book List</a>
@@ -46,6 +54,80 @@
                class="btn btn-warning">
                 Admin Dashboard
             </a>
+        </div>
+    </div>
+
+    <!-- Review Submission Form -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Write a Review</h4>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/books/{id}/reviews(id=${book.id})}" method="post" th:object="${newReview}">
+                <div class="form-group">
+                    <label for="rating">Rating (1-5 stars):</label>
+                    <select class="form-control" id="rating" th:field="*{rating}" required>
+                        <option value="">Select Rating</option>
+                        <option value="1">1 Star</option>
+                        <option value="2">2 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="5">5 Stars</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Review Comment:</label>
+                    <textarea class="form-control" id="comment" th:field="*{comment}" rows="4" 
+                              placeholder="Share your thoughts about this book..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Submit Review</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reviews Display -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Reviews <span class="badge badge-secondary" th:text="${#lists.size(reviews)}">0</span></h4>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(reviews)}" class="text-muted">
+                <p>No reviews yet. Be the first to review this book!</p>
+            </div>
+            <div th:each="review : ${reviews}" class="border-bottom pb-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1" th:text="${review.username}">Username</h6>
+                        <div class="mb-2">
+                            <span th:each="star : ${#numbers.sequence(1, 5)}" 
+                                  th:class="${star <= review.rating} ? 'text-warning' : 'text-muted'">★</span>
+                            <span class="ml-2" th:text="${review.rating} + ' stars'">5 stars</span>
+                        </div>
+                        <p class="mb-0" th:text="${review.comment}">Review comment</p>
+                    </div>
+                    <div>
+                        <!-- User can delete their own review -->
+                        <form th:action="@{/books/{bookId}/reviews/{reviewId}/delete(bookId=${book.id}, reviewId=${review.id})}" 
+                              method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                    th:if="${review.username == #authentication.name}"
+                                    onclick="return confirm('Are you sure you want to delete your own review?')">
+                                Delete
+                            </button>
+                        </form>
+                        
+                        <!-- Admin can delete any review -->
+                        <form th:action="@{/books/admin/books/{bookId}/reviews/{reviewId}/delete(bookId=${book.id}, reviewId=${review.id})}" 
+                              method="post" class="d-inline" sec:authorize="hasRole('ADMIN')">
+                            <button type="submit" class="btn btn-sm btn-outline-warning ml-2" 
+                                    th:if="${review.username != #authentication.name}"
+                                    onclick="return confirm('Are you sure you want to delete this review as an administrator?')">
+                                Admin Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
