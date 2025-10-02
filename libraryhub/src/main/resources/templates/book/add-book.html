@@ -7,6 +7,11 @@
 <body class="bg-light">
 <div class="container mt-5">
   <h2 class="mb-4">➕ Add a New Book</h2>
+  
+  <!-- Display success/error messages -->
+  <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}"></div>
+  <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+  
   <form th:action="@{/books/add}" th:object="${book}" method="post" class="card p-4 shadow-sm">
     <div class="mb-3">
       <label class="form-label">Title</label>
@@ -20,8 +25,18 @@
       <label class="form-label">Genre</label>
       <input type="text" th:field="*{genre}" class="form-control"/>
     </div>
-    <button type="submit" class="btn btn-primary">Save Book</button>
-    <a th:href="@{/books}" class="btn btn-secondary">Cancel</a>
+    <div class="mb-3">
+      <div class="form-check">
+        <input type="checkbox" th:field="*{available}" class="form-check-input" id="available" checked/>
+        <label class="form-check-label" for="available">
+          Available for reservation
+        </label>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">Save Book</button>
+      <a th:href="@{/books}" class="btn btn-secondary">Cancel</a>
+    </div>
   </form>
 </div>
 </body>
