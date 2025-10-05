@@ -1,0 +1,30 @@
+<!-- Recommendation Fragment: Displays a grid of recommended books -->
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="recGrid(title, books)">
+
+    <div th:if="${books != null and !#lists.isEmpty(books)}" class="card mt-4">
+        <div class="card-header">
+            <h5 th:text="${title}">Recommended</h5>
+        </div>
+
+        <div class="p-3" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));grid-gap:15px;">
+            <div class="border rounded" th:each="b : ${books}">
+                <div class="p-3">
+                    <!-- Book title -->
+                    <a class="d-block font-weight-bold"
+                       th:href="@{/books/{id}(id=${b.id})}"
+                       th:text="${b.title}">Book Title</a>
+
+                    <!-- Meta -->
+                    <div class="text-muted">
+                        <span th:text="${b.author}">Author</span>
+                        <span class="ml-2" th:text="${b.genre}">Genre</span>
+                    </div>
+
+                    <a class="btn btn-sm btn-outline-secondary mt-2"
+                       th:href="@{/books/{id}(id=${b.id})}">Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

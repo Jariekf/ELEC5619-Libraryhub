@@ -48,7 +48,34 @@
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
 
-  <!-- Books List -->
+    <!-- Recommendations block  -->
+    <div th:if="${recommended != null and !#lists.isEmpty(recommended)}" class="card mt-4">
+        <div class="card-header">
+            <h5>Recommended for you</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 col-lg-3 mb-3" th:each="b : ${recommended}">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <a class="font-weight-bold d-block"
+                               th:href="@{/books/{id}(id=${b.id})}"
+                               th:text="${b.title}">Book Title</a>
+                            <div class="text-muted small mt-1">
+                                <span th:text="${b.author}">Author</span>
+                                <span class="ml-2" th:text="${b.genre}">Genre</span>
+                            </div>
+                            <a class="btn btn-sm btn-outline-secondary mt-2"
+                               th:href="@{/books/{id}(id=${b.id})}">Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Books List -->
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     <div class="col" th:each="book : ${books}">
       <div class="card shadow-sm h-100">

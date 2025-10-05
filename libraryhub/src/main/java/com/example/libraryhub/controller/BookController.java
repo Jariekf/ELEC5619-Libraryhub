@@ -2,16 +2,24 @@ package com.example.libraryhub.controller;
 
 import com.example.libraryhub.model.Book;
 import com.example.libraryhub.model.Review;
+import com.example.libraryhub.model.WaitingList;
 import com.example.libraryhub.service.BookService;
 import com.example.libraryhub.service.ReservationService;
 import com.example.libraryhub.service.ReviewService;
+import com.example.libraryhub.service.WaitingListService;
 import lombok.RequiredArgsConstructor;
+import com.example.libraryhub.service.RecommendationService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/books")
@@ -21,30 +29,66 @@ public class BookController {
     private final BookService bookService;
     private final ReservationService reservationService;
     private final ReviewService reviewService;
+    private final WaitingListService waitingListService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
-    public String listBooks(Model model) {
+    public String listBooks(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         model.addAttribute("books", bookService.getAllBooks());
+        // add recommendations on the homepage if user is logged in
+        if (userDetails != null) {
+            model.addAttribute(
+                    "recommended",
+                    recommendationService.recommendTop5ByAuthorsAndGenres(userDetails.getUsername())
+            );
+        }
         return "book/books"; // Thymeleaf template name: books.html
     }
 
     @GetMapping("/{id}")
-    public String bookDetails(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String bookDetails(@PathVariable Long id,
+                              Model model,
+                              @AuthenticationPrincipal UserDetails userDetails,
+                              RedirectAttributes redirectAttributes) {
         Book book = bookService.getBookById(id);
         if (book == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
             return "redirect:/books";
         }
+
         model.addAttribute("book", book);
         model.addAttribute("reviews", reviewService.getReviewsForBook(id));
         model.addAttribute("averageRating", reviewService.getAverageRatingForBook(id));
         model.addAttribute("newReview", new Review());
+
+        var reservationOpt = reservationService.getReservationForBook(id);
+
+        boolean hasReserved = false;
+        if (userDetails != null) {
+            hasReserved = reservationOpt
+                    .map(r -> r.getUser().getUsername().equals(userDetails.getUsername()))
+                    .orElse(false);
+        }
+        model.addAttribute("hasReserved", hasReserved);
+        model.addAttribute("currentUserReserved", hasReserved);
+
+        boolean alreadyInWaitingList = false;
+        if (userDetails != null) {
+            alreadyInWaitingList = waitingListService.isUserInWaitingList(id, userDetails.getUsername());
+        }
+        model.addAttribute("alreadyInWaitingList", alreadyInWaitingList);
+
+        List<WaitingList> waitingList = waitingListService.getWaitingList(id);
+        model.addAttribute("waitingList", waitingList);
+
         if (!book.isAvailable()) {
             reservationService.getReservationForBook(id)
                     .ifPresent(reservation -> model.addAttribute("reservation", reservation));
         }
+
         return "book/book-details";
     }
+
 
     @PostMapping("/search")
     public String searchBooks(@RequestParam String title, Model model) {
@@ -82,6 +126,58 @@ public class BookController {
         }
         return "redirect:/books/" + id;
     }
+
+    @PostMapping("/{id}/return")
+    public String returnBook(@PathVariable Long id,
+                             @AuthenticationPrincipal UserDetails user,
+                             RedirectAttributes ra,
+                             @RequestParam(name = "from", required = false) String from) {
+        if (user == null) return "redirect:/auth/login";
+        try {
+            reservationService.returnBook(id, user.getUsername());
+            ra.addFlashAttribute("successMessage", "Book returned successfully.");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        if ("list".equals(from)) {
+            return "redirect:/customer/dashboard";
+        }
+
+        return "redirect:/books/" + id;
+    }
+
+    @PostMapping("/{id}/waitlist")
+    public String joinWaitingList(@PathVariable Long id,
+                                  @AuthenticationPrincipal UserDetails user,
+                                  RedirectAttributes ra) {
+        if (user == null) return "redirect:/auth/login";
+        try {
+            waitingListService.addToWaitingList(id, user.getUsername());
+            ra.addFlashAttribute("successMessage", "Joined waiting list.");
+        } catch (IllegalStateException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("errorMessage", "Unexpected error while joining waiting list.");
+        }
+        return "redirect:/books/" + id;
+    }
+
+    @PostMapping("/{id}/waitlist/cancel")
+    public String cancelWaiting(@PathVariable Long id,
+                                @AuthenticationPrincipal UserDetails user,
+                                RedirectAttributes ra) {
+        if (user == null) return "redirect:/auth/login";
+        try {
+            waitingListService.cancelWaiting(id, user.getUsername());
+            ra.addFlashAttribute("successMessage", "Cancelled waiting.");
+        } catch (IllegalStateException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("errorMessage", "Unexpected error while cancelling waiting.");
+        }
+        return "redirect:/books/" + id;
+    }
+
 
     @PostMapping("/{id}/reviews")
     public String submitReview(@PathVariable Long id,

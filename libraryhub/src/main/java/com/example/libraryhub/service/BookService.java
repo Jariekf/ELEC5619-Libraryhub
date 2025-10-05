@@ -15,6 +15,11 @@ public class BookService {
     private final ReservationRepository reservationRepository;
     private final ReviewRepository reviewRepository;
 
+    public void deleteById(Long bookId) {
+        bookRepository.deleteById(bookId);
+    }
+
+
     public BookService(BookRepository bookRepository, 
                       ReservationRepository reservationRepository,
                       ReviewRepository reviewRepository) {

@@ -18,6 +18,13 @@ public class Book {
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<WaitingList> waitingListEntries; // name can be anything
+
+    // NOTE:
+    // - When a Book is deleted, all related WaitingList rows will be removed automatically.
+    // - Make sure WaitingList.book is the owning side with @ManyToOne.
+
     // Constructors
     public Book() {}
     public Book(String title, String author, String genre) {
