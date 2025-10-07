@@ -23,6 +23,14 @@
          class="btn btn-info">
         My Reservations
       </a>
+      
+      <!-- AI Chatbot link for authenticated users -->
+      <a th:href="@{/chat}"
+         sec:authorize="isAuthenticated()"
+         class="btn btn-success ms-2"
+         title="Chat with AI Assistant">
+        🤖 AI Assistant
+      </a>
 
       <!-- Link to Admin Dashboard, only shown to ADMIN roles -->
       <a th:href="@{/admin/dashboard}"

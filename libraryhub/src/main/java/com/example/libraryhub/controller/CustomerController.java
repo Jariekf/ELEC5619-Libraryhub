@@ -41,5 +41,10 @@ public class CustomerController {
         return dashboard(user, model);
     }
 
+    @GetMapping("/chat")
+    public String chat() {
+        return "chatbot/chat";
+    }
+
 
 }
