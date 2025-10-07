@@ -30,6 +30,9 @@ public class AdminChatbotService {
     @Autowired
     private PolicyService policyService;
     
+    @Autowired
+    private AdminUserService adminUserService;
+    
     /**
      * Generate admin dashboard summary for chatbot
      */
@@ -80,18 +83,21 @@ public class AdminChatbotService {
     public String handleAdminQuery(String query, String adminUsername) {
         String lowerQuery = query.toLowerCase();
         
+        // First check if AdminUserService can handle this query (comprehensive user/book/system data)
+        String adminUserResponse = adminUserService.handleAdminUserQuery(query, adminUsername);
+        if (adminUserResponse != null) {
+            return adminUserResponse;
+        }
+        
+        // Handle system-level admin queries
         if (lowerQuery.contains("statistics") || lowerQuery.contains("stats") || lowerQuery.contains("metrics")) {
             return generateDetailedStatistics();
-        } else if (lowerQuery.contains("users") || lowerQuery.contains("user management")) {
-            return generateUserManagementInfo();
-        } else if (lowerQuery.contains("overdue") || lowerQuery.contains("late")) {
-            return generateOverdueReport();
         } else if (lowerQuery.contains("budget") || lowerQuery.contains("financial")) {
             return generateBudgetInfo();
-        } else if (lowerQuery.contains("popular") || lowerQuery.contains("trending")) {
-            return generatePopularityReport();
         } else if (lowerQuery.contains("system") || lowerQuery.contains("health")) {
             return generateSystemHealthReport();
+        } else if (lowerQuery.contains("admin") && lowerQuery.contains("help")) {
+            return generateAdminHelpMenu();
         } else {
             return generateAdminSummary(adminUsername);
         }
@@ -162,41 +168,46 @@ public class AdminChatbotService {
                "📈 Use these metrics for operational planning and reporting.";
     }
     
-    private String generateUserManagementInfo() {
-        Map<String, Object> stats = getSystemStatistics();
+    private String generateAdminHelpMenu() {
+        StringBuilder response = new StringBuilder();
+        response.append("🔧 **Admin Chatbot Help Menu:**\n\n");
         
-        return "👥 **User Management Overview:**\n\n" +
-               "**Current Users:**\n" +
-               "• Total registered: " + stats.get("totalUsers") + "\n" +
-               "• Active borrowers: " + stats.get("activeBorrows") + "\n" +
-               "• New registrations: " + stats.get("newUsers") + " this week\n\n" +
-               "**User Engagement:**\n" +
-               "• Users with reviews: Active community\n" +
-               "• Average books per user: " + (Long.valueOf(stats.get("totalBooks").toString()) / Math.max(1, Long.valueOf(stats.get("totalUsers").toString()))) + "\n\n" +
-               "**Admin Actions Available:**\n" +
-               "• Review user accounts in admin panel\n" +
-               "• Manage user permissions\n" +
-               "• Send user notifications\n\n" +
-               "💡 Check the admin panel for detailed user management tools.";
+        response.append("**📊 System & Statistics:**\n");
+        response.append("• 'system statistics' - Comprehensive system metrics\n");
+        response.append("• 'system health' - System status and performance\n");
+        response.append("• 'budget' or 'financial' - Financial overview\n\n");
+        
+        response.append("**👥 User Management:**\n");
+        response.append("• 'all users' or 'user list' - Complete user roster\n");
+        response.append("• 'user activity' - Most active users\n");
+        response.append("• 'user [username]' - Detailed user report\n\n");
+        
+        response.append("**📚 Book & Loan Management:**\n");
+        response.append("• 'all borrows' or 'borrow list' - All current loans\n");
+        response.append("• 'overdue' or 'late' - Overdue book report\n");
+        response.append("• 'popular books' - Most borrowed/reviewed books\n\n");
+        
+        response.append("**⭐ Reviews & Waiting Lists:**\n");
+        response.append("• 'all reviews' or 'recent reviews' - Review reports\n");
+        response.append("• 'waiting list' - Books with waiting lists\n\n");
+        
+        response.append("**💡 Pro Tips:**\n");
+        response.append("• Ask complex queries like 'show user activity and popular books'\n");
+        response.append("• Use specific usernames for detailed user reports\n");
+        response.append("• Try 'admin help' anytime for this menu\n");
+        
+        return response.toString();
+    }
+    
+    private String generateUserManagementInfo() {
+        // This method is now largely handled by AdminUserService
+        // Keep for backward compatibility but redirect to comprehensive service
+        return "ℹ️ **User Management:** Try asking for 'all users', 'user activity', or 'user [username]' for detailed user information powered by our enhanced data service.";
     }
     
     private String generateOverdueReport() {
-        Map<String, Object> stats = getSystemStatistics();
-        
-        return "⚠️ **Overdue Books Report:**\n\n" +
-               "**Current Status:**\n" +
-               "• Overdue books: " + stats.get("overdueBooks") + "\n" +
-               "• Pending returns: Check detailed report\n" +
-               "• Fine revenue: Processing fees apply\n\n" +
-               "**Action Items:**\n" +
-               "• Send reminder notifications\n" +
-               "• Update fine calculations\n" +
-               "• Follow up on long-overdue items\n\n" +
-               "**Policy Reference:**\n" +
-               "• Overdue fine: $0.50 per day\n" +
-               "• Maximum fine: $10.00 per book\n" +
-               "• Grace period: 3 days\n\n" +
-               "📋 Access detailed overdue reports in the admin panel.";
+        // This is now handled by AdminUserService with comprehensive data
+        return "ℹ️ **Overdue Report:** Try asking for 'overdue books' or 'overdue report' for detailed overdue analysis from our comprehensive data service.";
     }
     
     private String generateBudgetInfo() {
@@ -219,21 +230,8 @@ public class AdminChatbotService {
     }
     
     private String generatePopularityReport() {
-        return "📈 **Popularity & Trends Report:**\n\n" +
-               "**Popular Genres:**\n" +
-               "• Fantasy: High demand\n" +
-               "• Mystery: Consistent borrowing\n" +
-               "• Science Fiction: Growing interest\n" +
-               "• Romance: Steady popularity\n\n" +
-               "**Top Authors:**\n" +
-               "• J.K. Rowling: Always in demand\n" +
-               "• Agatha Christie: Classic favorite\n" +
-               "• Douglas Adams: Cult following\n\n" +
-               "**Recommendations:**\n" +
-               "• Acquire more books in popular genres\n" +
-               "• Consider series completions\n" +
-               "• Monitor borrowing trends monthly\n\n" +
-               "💡 Use this data to guide procurement decisions.";
+        // This is now handled by AdminUserService with real data analysis
+        return "ℹ️ **Popularity Report:** Try asking for 'popular books' for detailed popularity analysis based on real borrowing and review data.";
     }
     
     private String generateSystemHealthReport() {

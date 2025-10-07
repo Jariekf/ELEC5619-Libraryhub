@@ -26,4 +26,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Transactional
     @Query("DELETE FROM Review r WHERE r.book.id = :bookId")
     void deleteByBookId(Long bookId);
+    
+    // Get all reviews by username with book details
+    @Query("SELECT r FROM Review r JOIN FETCH r.book WHERE r.username = :username ORDER BY r.id DESC")
+    List<Review> findByUsernameWithBook(@Param("username") String username);
 }

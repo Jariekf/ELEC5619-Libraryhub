@@ -47,13 +47,18 @@ public class UserContextService {
                 return null;
             }
             
-            // Gather all user-specific data
+            // Gather ALL user-specific data comprehensively
             List<Reservation> reservations = reservationRepository.findWithBookByUser_Username(username);
-            List<Review> userReviews = reviewRepository.findByBookId(null); // We'll need to add a method for this
+            List<Review> userReviews = reviewRepository.findByUsernameWithBook(username);
             List<Book> reviewedBooks = reviewRepository.findRecentHighRatedBooksByUser(username);
             List<WaitingList> waitingListEntries = getWaitingListForUser(user);
             
-            return new UserContext(user, reservations, userReviews, reviewedBooks, waitingListEntries);
+            // Get additional comprehensive data
+            List<Long> allReservedBookIds = reservationRepository.findReservedBookIdsByUsername(username);
+            List<Long> allReviewedBookIds = reviewRepository.findReviewedBookIdsByUsername(username);
+            
+            return new UserContext(user, reservations, userReviews, reviewedBooks, waitingListEntries, 
+                                 allReservedBookIds, allReviewedBookIds);
         } catch (Exception e) {
             // Return null if there's any error fetching user data
             return null;
@@ -176,18 +181,31 @@ public class UserContextService {
     }
     
     private String generateReviewHistoryResponse(UserContext context) {
-        List<Book> reviewedBooks = context.getReviewedBooks();
-        if (reviewedBooks.isEmpty()) {
+        List<Review> userReviews = context.getReviews();
+        if (userReviews.isEmpty()) {
             return "📝 **Your Reviews:**\n\nYou haven't reviewed any books yet. After reading a book, consider leaving a review to help other readers!";
         }
         
         StringBuilder response = new StringBuilder();
-        response.append("📝 **Your Recent Reviews:**\n\n");
+        response.append("📝 **Your Detailed Reviews:**\n\n");
         
-        reviewedBooks.stream().limit(5).forEach(book -> {
-            response.append("⭐ **").append(book.getTitle()).append("** by ").append(book.getAuthor()).append("\n");
-            response.append("   Genre: ").append(book.getGenre()).append("\n\n");
+        userReviews.stream().limit(8).forEach(review -> {
+            Book book = review.getBook();
+            String stars = "★".repeat(review.getRating()) + "☆".repeat(5 - review.getRating());
+            response.append("**").append(book.getTitle()).append("** by ").append(book.getAuthor()).append("\n");
+            response.append("Rating: ").append(stars).append(" (").append(review.getRating()).append("/5)\n");
+            response.append("Genre: ").append(book.getGenre()).append("\n");
+            if (review.getComment() != null && !review.getComment().trim().isEmpty()) {
+                response.append("Comment: *").append(review.getComment()).append("*\n");
+            }
+            response.append("\n");
         });
+        
+        // Calculate average rating
+        double avgRating = userReviews.stream()
+                .mapToInt(Review::getRating)
+                .average().orElse(0.0);
+        response.append("📊 **Your average rating: ").append(String.format("%.1f", avgRating)).append("/5**\n\n");
         
         response.append("Thanks for contributing to our community with your reviews! 🎉");
         return response.toString();
@@ -305,21 +323,26 @@ public class UserContextService {
         }
     }
     
-    // Data holder class for user context
+    // Data holder class for comprehensive user context
     public static class UserContext {
         private final User user;
         private final List<Reservation> reservations;
         private final List<Review> reviews;
         private final List<Book> reviewedBooks;
         private final List<WaitingList> waitingList;
+        private final List<Long> allReservedBookIds;
+        private final List<Long> allReviewedBookIds;
         
         public UserContext(User user, List<Reservation> reservations, List<Review> reviews, 
-                          List<Book> reviewedBooks, List<WaitingList> waitingList) {
+                          List<Book> reviewedBooks, List<WaitingList> waitingList,
+                          List<Long> allReservedBookIds, List<Long> allReviewedBookIds) {
             this.user = user;
             this.reservations = reservations != null ? reservations : List.of();
             this.reviews = reviews != null ? reviews : List.of();
             this.reviewedBooks = reviewedBooks != null ? reviewedBooks : List.of();
             this.waitingList = waitingList != null ? waitingList : List.of();
+            this.allReservedBookIds = allReservedBookIds != null ? allReservedBookIds : List.of();
+            this.allReviewedBookIds = allReviewedBookIds != null ? allReviewedBookIds : List.of();
         }
         
         // Getters
@@ -328,6 +351,8 @@ public class UserContextService {
         public List<Review> getReviews() { return reviews; }
         public List<Book> getReviewedBooks() { return reviewedBooks; }
         public List<WaitingList> getWaitingList() { return waitingList; }
+        public List<Long> getAllReservedBookIds() { return allReservedBookIds; }
+        public List<Long> getAllReviewedBookIds() { return allReviewedBookIds; }
         
         public boolean hasActivity() {
             return !reservations.isEmpty() || !reviewedBooks.isEmpty() || !waitingList.isEmpty();

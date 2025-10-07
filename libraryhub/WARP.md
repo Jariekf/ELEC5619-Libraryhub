@@ -1,9 +1,162 @@
-# WARP.md
+# 🏛️ LibraryHub - AI-Enhanced Library Management System
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+This file provides comprehensive guidance for WARP (warp.dev) when working with the LibraryHub codebase.
 
-## Project Overview
-LibraryHub is a Spring Boot-based library management system that allows users to reserve books, join waiting lists, write reviews, and receive AI-powered recommendations. The system supports role-based access control with Admin and Customer roles.
+## 🎯 Project Overview
+LibraryHub is an advanced Spring Boot-based library management system featuring authentication-aware AI chatbot capabilities. Users can reserve books, join waiting lists, write reviews, and receive personalized AI-powered recommendations through a sophisticated role-based system.
+
+## 🤖 AI Chatbot Features
+
+### Authentication-Aware System
+The LibraryHub AI chatbot integrates with Spring Security for role-based responses:
+
+- **Authentication Required**: Users must be logged in to access the chatbot
+- **Role-Based Context**: Different responses for ADMIN and CUSTOMER roles
+- **CSRF Protection**: Full security integration with Spring Security
+- **Session Management**: Uses authenticated user context for personalization
+- **Comprehensive User Data**: Access to full user profiles, reservations, reviews, and reading history
+
+### Ollama Integration
+The system uses Ollama with the Llama 3.2 model for local AI processing:
+
+- **Local AI Model**: Llama 3.2 running via Ollama on localhost:11434
+- **Real-time Responses**: Direct API integration for fast responses
+- **Fallback System**: Rule-based responses when AI is unavailable
+- **Context-Aware**: Prompts include user role, personal data, and library-specific context
+
+### Policy Integration
+Comprehensive library policy support from `library-policies.properties`:
+
+- **Borrowing Rules**: Loan periods, limits, renewal policies
+- **Fine Structure**: Late fees, maximum fines, processing charges
+- **Operating Hours**: Daily schedules, holiday hours
+- **Membership**: Registration requirements, account policies
+- **Digital Services**: Online catalog, reservation system
+- **Admin Policies**: Budget, inventory, maintenance schedules
+
+### Customer Features
+- **Comprehensive Personal Data**: Full access to user profiles, reservation history, reviews, and preferences
+- **Personalized Recommendations**: Book series suggestions based on detailed reading history
+- **Account Information**: Current borrows, reservations, waiting lists, and reading preferences
+- **Library Assistance**: Hours, policies, procedures, account help
+- **Book Search**: Natural language search with availability checking
+- **FAQ Support**: Comprehensive policy questions and answers
+- **Personalized Queries**: "My books", "my reviews", "my reservations" with detailed responses
+
+### Admin Features
+- **Comprehensive User Management**: 
+  - Complete user roster with activity summaries
+  - Detailed individual user reports with full history
+  - User activity analysis and engagement metrics
+- **Advanced Book & Loan Management**:
+  - All current borrows with user details and dates
+  - Comprehensive overdue analysis with fine calculations
+  - Popular books ranking based on borrowing and review data
+- **System Analytics**:
+  - Real-time statistics from actual database
+  - User engagement and borrowing patterns
+  - Review analytics and rating summaries
+- **Operational Insights**:
+  - Waiting list management and analysis
+  - Budget tracking and financial overview
+  - System health monitoring and performance metrics
+- **Administrative Commands**:
+  - Specific user lookup: "user [username]" for detailed reports
+  - Bulk queries: "all users", "user activity", "popular books"
+  - System queries: "overdue books", "waiting list", "all reviews"
+
+## 📊 System Architecture
+
+### Service Layer Enhancement
+Enhanced microservices architecture for comprehensive functionality:
+
+```
+ChatbotService (Main orchestrator)
+├── OllamaService (AI integration with role-based prompts)
+├── PolicyService (Library policies and FAQ responses)
+├── SeriesRecommendationService (Personalized book suggestions)
+├── AdminChatbotService (Admin system queries)
+├── AdminUserService (Comprehensive user/system data access)
+├── UserContextService (Complete user data aggregation)
+├── RecommendationService (General recommendations)
+└── Enhanced Repository Layer (All entity repositories)
+```
+
+### Database Integration
+- **Complete User Profiles**: Full user data including preferences, history, and activity
+- **Comprehensive Book Data**: Full catalog with metadata, availability, and statistics
+- **Detailed Reservations**: Current and historical borrowing with date tracking
+- **Rich Review System**: User ratings, comments, and engagement metrics
+- **Waiting List Management**: Queue management and notification system
+- **Real-time Analytics**: Live data aggregation for admin insights
+- **Policy Configuration**: Centralized policy and configuration management
+
+## 🎯 Example Usage
+
+### Customer Interactions
+```
+"What are your opening hours?"
+"Find books by Stephen King"
+"Recommend a fantasy series for me"
+"How do I renew a book?"
+"Show me my current reservations"
+"What books have I reviewed?"
+"Am I on any waiting lists?"
+"Show me my reading history"
+```
+
+### Admin Interactions
+```
+"Show me all users"
+"What's the user activity like?"
+"Show me user alice" (detailed user report)
+"List all current borrows"
+"Show me overdue books"
+"What are the most popular books?"
+"Show me all reviews"
+"What's on the waiting list?"
+"Give me system statistics"
+"Show me the budget status"
+"Check system health"
+"Admin help" (comprehensive command menu)
+```
+
+## 🚀 Technical Implementation
+
+### Security Features
+- **Authentication Gates**: All endpoints require valid user session
+- **Role-Based Access**: Different service methods for ADMIN vs CUSTOMER
+- **CSRF Protection**: Integrated with Spring Security tokens
+- **Session Validation**: Continuous authentication state checking
+- **Data Access Control**: Role-based data filtering and access restrictions
+
+### Frontend Enhancements
+- **Advanced Markdown Rendering**: Rich text formatting with proper bold/italic/list support
+- **Role-Aware UI**: Different examples and features based on user role
+- **Authentication Flow**: Seamless login integration with session management
+- **Real-time Interaction**: AJAX-based chat interface with enhanced user experience
+- **Personalized Examples**: User-specific query suggestions based on role and data
+
+## 🔧 Development Status
+
+### ✅ Completed Features
+- Authentication-aware chatbot system with comprehensive user data integration
+- Ollama/Llama 3.2 integration with enhanced context awareness
+- Advanced role-based response system with full data access
+- Complete policy integration and comprehensive FAQ support
+- Personalized series recommendation engine
+- Comprehensive admin dashboard with real-time data analytics
+- Advanced security integration with data access control
+- Enhanced frontend UI with improved markdown rendering
+- Complete user context service with full data aggregation
+- Admin user service with system-wide data access and reporting
+
+### 🚧 Future Enhancements
+- Enhanced machine learning models for better recommendations
+- Advanced natural language processing with conversation memory
+- Integration with external library systems and databases
+- Predictive analytics for library management
+- Multi-language support for diverse user base
 
 ## Development Commands
 

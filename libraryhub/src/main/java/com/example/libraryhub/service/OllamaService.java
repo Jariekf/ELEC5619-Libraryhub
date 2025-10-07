@@ -10,8 +10,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 // PolicyService is now in the same package
 
+import com.example.libraryhub.model.*;
+import com.example.libraryhub.repository.*;
+
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service for integrating with Ollama to run open-source LLMs like Llama locally
@@ -28,6 +34,21 @@ public class OllamaService {
     
     @Autowired
     private UserContextService userContextService;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private BookRepository bookRepository;
+    
+    @Autowired
+    private ReservationRepository reservationRepository;
+    
+    @Autowired
+    private ReviewRepository reviewRepository;
+    
+    @Autowired
+    private WaitingListRepository waitingListRepository;
     
     @Value("${ollama.base-url:http://localhost:11434}")
     private String ollamaBaseUrl;
@@ -148,13 +169,34 @@ public class OllamaService {
         
         // Role-specific instructions
         if (isAdmin) {
-            prompt.append("You are assisting a library administrator. ");
-            prompt.append("Provide detailed operational information, system insights, and administrative guidance when appropriate. ");
+            prompt.append("You are LibraryBot assisting a library administrator. ");
+            prompt.append("CRITICAL INSTRUCTIONS: ");
+            prompt.append("1. You MUST use ONLY the real database data provided below. ");
+            prompt.append("2. NEVER invent, guess, or hallucinate any names, usernames, numbers, or statistics. ");
+            prompt.append("3. If the real data shows no information, say 'No data available' or 'No users found'. ");
+            prompt.append("4. Do NOT provide SQL queries or technical instructions. ");
+            prompt.append("5. Give direct answers based ONLY on the actual data shown. ");
+            
+            // Add real database context for admin queries
+            String realDataContext = buildRealDatabaseContext(userMessage);
+            if (realDataContext != null && !realDataContext.trim().isEmpty()) {
+                log.info("=== INJECTING REAL DATABASE DATA FOR ADMIN QUERY ===\n{}", realDataContext);
+                prompt.append("\n\n=== REAL LIBRARY DATABASE DATA (USE ONLY THIS) ===\n");
+                prompt.append(realDataContext);
+                prompt.append("\n=== END OF REAL DATA ===\n");
+                prompt.append("\nSTRICT RULE: Answer using ONLY the usernames and data shown above. ");
+                prompt.append("If a username is not listed above, do NOT mention any names like 'John Doe' or 'Emily Johnson'. ");
+                prompt.append("Instead say 'Based on the current data, [describe what you see or say no data available]'.");
+            } else {
+                log.warn("No database context available for admin query: {}", userMessage);
+                prompt.append("\n\nNo database context available for this query. ");
+                prompt.append("Please inform the admin that specific database access is required for this type of query.");
+            }
             
             // Add admin policy context
             try {
                 var adminPolicies = policyService.getAdminPolicies();
-                prompt.append("Admin Context: Monthly budget $").append(adminPolicies.get("monthlyBudget"));
+                prompt.append("\nAdmin Policies: Monthly budget $").append(adminPolicies.get("monthlyBudget"));
                 prompt.append(", Staff levels: ").append(adminPolicies.get("staffLevels"));
                 prompt.append(", Data retention: ").append(adminPolicies.get("dataRetention")).append(". ");
             } catch (Exception e) {
@@ -216,6 +258,151 @@ public class OllamaService {
         prompt.append("Keep responses concise but informative:");
         
         return prompt.toString();
+    }
+    
+    /**
+     * Build real database context for admin queries - ADMIN ACCESS ONLY
+     * This method provides actual data from the database to prevent AI hallucination
+     */
+    private String buildRealDatabaseContext(String userMessage) {
+        try {
+            StringBuilder context = new StringBuilder();
+            String lowerMessage = userMessage.toLowerCase();
+            
+            // User-related queries (including most/top borrower queries)
+            if (lowerMessage.contains("user") || lowerMessage.contains("customer") || 
+                lowerMessage.contains("borrow") || lowerMessage.contains("most") || 
+                lowerMessage.contains("top") || lowerMessage.contains("who")) {
+                List<User> allUsers = userRepository.findAll();
+                List<Reservation> allReservations = reservationRepository.findAllWithDetails();
+                
+                context.append("=== USERS DATA ===\n");
+                context.append("Total users in system: ").append(allUsers.size()).append("\n");
+                
+                // User list with basic info
+                context.append("Active users:\n");
+                allUsers.stream().limit(10).forEach(user -> {
+                    context.append("- ").append(user.getUsername())
+                            .append(" (").append(user.getRole().name())
+                            .append(", joined: ").append(user.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM yyyy")))
+                            .append(")\n");
+                });
+                if (allUsers.size() > 10) {
+                    context.append("... and ").append(allUsers.size() - 10).append(" more users\n");
+                }
+                
+                // Borrowing statistics
+                if (!allReservations.isEmpty()) {
+                    context.append("\n=== BORROWING DATA ===\n");
+                    context.append("Total active reservations: ").append(allReservations.size()).append("\n");
+                    
+                    // Count borrows per user
+                    Map<String, Long> userBorrowCounts = allReservations.stream()
+                            .collect(Collectors.groupingBy(r -> r.getUser().getUsername(), Collectors.counting()));
+                    
+                    if (!userBorrowCounts.isEmpty()) {
+                        context.append("\nCURRENT ACTIVE BORROWERS (sorted by most books borrowed):\n");
+                        userBorrowCounts.entrySet().stream()
+                                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                                .forEach(entry -> context.append("- ").append(entry.getKey())
+                                        .append(": ").append(entry.getValue()).append(" currently borrowed book")
+                                        .append(entry.getValue() > 1 ? "s" : "").append("\n"));
+                        
+                        // Explicitly identify the top borrower
+                        String topBorrower = userBorrowCounts.entrySet().stream()
+                                .max(Map.Entry.comparingByValue())
+                                .map(Map.Entry::getKey)
+                                .orElse("None");
+                        Long topBorrowCount = userBorrowCounts.entrySet().stream()
+                                .max(Map.Entry.comparingByValue())
+                                .map(Map.Entry::getValue)
+                                .orElse(0L);
+                        
+                        context.append("\nTOP BORROWER: ").append(topBorrower)
+                                .append(" with ").append(topBorrowCount).append(" currently borrowed book")
+                                .append(topBorrowCount > 1 ? "s" : "").append("\n");
+                    } else {
+                        context.append("\nNo borrowing data available.\n");
+                    }
+                } else {
+                    context.append("\n=== BORROWING DATA ===\n");
+                    context.append("No active reservations in the system.\n");
+                    context.append("No users currently have borrowed books.\n");
+                }
+            }
+            
+            // Book-related queries
+            if (lowerMessage.contains("book") || lowerMessage.contains("popular") || lowerMessage.contains("borrow")) {
+                List<Book> allBooks = bookRepository.findAll();
+                List<Review> allReviews = reviewRepository.findAll();
+                
+                context.append("\n=== BOOKS DATA ===\n");
+                context.append("Total books in catalog: ").append(allBooks.size()).append("\n");
+                
+                long availableBooks = allBooks.stream().mapToLong(book -> book.isAvailable() ? 1 : 0).sum();
+                context.append("Available books: ").append(availableBooks).append("\n");
+                context.append("Books currently borrowed: ").append(allBooks.size() - availableBooks).append("\n");
+                
+                // Popular books (those currently borrowed)
+                List<Book> borrowedBooks = allBooks.stream().filter(book -> !book.isAvailable()).collect(Collectors.toList());
+                if (!borrowedBooks.isEmpty()) {
+                    context.append("\nCurrently borrowed books:\n");
+                    borrowedBooks.stream().limit(5).forEach(book -> 
+                        context.append("- ").append(book.getTitle()).append(" by ").append(book.getAuthor()).append("\n")
+                    );
+                }
+            }
+            
+            // Review-related queries
+            if (lowerMessage.contains("review")) {
+                List<Review> allReviews = reviewRepository.findAll();
+                context.append("\n=== REVIEWS DATA ===\n");
+                context.append("Total reviews: ").append(allReviews.size()).append("\n");
+                
+                if (!allReviews.isEmpty()) {
+                    double avgRating = allReviews.stream()
+                            .mapToInt(Review::getRating)
+                            .average().orElse(0.0);
+                    context.append("Average rating: ").append(String.format("%.1f", avgRating)).append("/5\n");
+                    
+                    // Most active reviewers
+                    Map<String, Long> reviewCounts = allReviews.stream()
+                            .collect(Collectors.groupingBy(Review::getUsername, Collectors.counting()));
+                    
+                    context.append("Most active reviewers:\n");
+                    reviewCounts.entrySet().stream()
+                            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                            .limit(3)
+                            .forEach(entry -> context.append("- ").append(entry.getKey())
+                                    .append(": ").append(entry.getValue()).append(" review(s)\n"));
+                }
+            }
+            
+            // Waiting list queries
+            if (lowerMessage.contains("waiting")) {
+                List<WaitingList> waitingEntries = waitingListRepository.findAll();
+                context.append("\n=== WAITING LIST DATA ===\n");
+                context.append("Total waiting list entries: ").append(waitingEntries.size()).append("\n");
+                
+                if (!waitingEntries.isEmpty()) {
+                    Map<String, List<WaitingList>> bookWaitingMap = waitingEntries.stream()
+                            .collect(Collectors.groupingBy(w -> w.getBook().getTitle()));
+                    
+                    context.append("Books with waiting lists:\n");
+                    bookWaitingMap.entrySet().stream()
+                            .sorted((a, b) -> Integer.compare(b.getValue().size(), a.getValue().size()))
+                            .limit(3)
+                            .forEach(entry -> context.append("- ").append(entry.getKey())
+                                    .append(": ").append(entry.getValue().size()).append(" waiting\n"));
+                }
+            }
+            
+            return context.toString();
+            
+        } catch (Exception e) {
+            log.error("Error building database context for admin: {}", e.getMessage(), e);
+            return "Database context unavailable due to system error.";
+        }
     }
     
     /**

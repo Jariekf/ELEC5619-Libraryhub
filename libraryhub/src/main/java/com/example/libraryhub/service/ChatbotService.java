@@ -106,12 +106,17 @@ public class ChatbotService {
             }
         }
         
-        // Check for admin-specific queries
+        // Check for admin-specific queries with comprehensive keyword detection
         boolean isAdmin = ollamaService.isAdminUser(username);
         if (isAdmin && (normalizedMessage.contains("admin") || normalizedMessage.contains("dashboard") || 
                        normalizedMessage.contains("statistics") || normalizedMessage.contains("users") ||
-                       normalizedMessage.contains("system") || normalizedMessage.contains("budget"))) {
-            log.info("Using admin-specific response for user: {}", username);
+                       normalizedMessage.contains("user list") || normalizedMessage.contains("all users") ||
+                       normalizedMessage.contains("user activity") || normalizedMessage.contains("system") ||
+                       normalizedMessage.contains("budget") || normalizedMessage.contains("borrow") ||
+                       normalizedMessage.contains("borrows") || normalizedMessage.contains("overdue") ||
+                       normalizedMessage.contains("popular books") || normalizedMessage.contains("reviews") ||
+                       normalizedMessage.contains("waiting list") || normalizedMessage.contains("health"))) {
+            log.info("Using comprehensive admin-specific response for user: {}", username);
             return adminChatbotService.handleAdminQuery(message, username);
         }
         

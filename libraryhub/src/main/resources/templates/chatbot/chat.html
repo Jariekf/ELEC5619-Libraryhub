@@ -132,6 +132,21 @@
         .example-query:hover {
             background: #dee2e6;
         }
+        .message-content ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .message-content li {
+            margin: 4px 0;
+        }
+        .message-content strong {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .message-content em {
+            font-style: italic;
+            color: #7f8c8d;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -310,19 +325,32 @@
         sendMessage();
     }
 
+    // Function to convert basic markdown to HTML
+    function markdownToHtml(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold** -> <strong>bold</strong>
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')             // *italic* -> <em>italic</em>
+            .replace(/\n/g, '<br>')                          // newlines to <br>
+            .replace(/• (.*?)(<br>|$)/g, '<li>$1</li>')    // • items to <li>
+            .replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');        // wrap <li> in <ul>
+    }
+    
     function appendMessage(message, sender) {
         const chatBox = document.getElementById('chat-box');
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('chat-message', sender + '-message');
         
+        // Convert markdown formatting to HTML for bot messages
+        const formattedMessage = sender === 'bot' ? markdownToHtml(message) : message;
+        
         if (sender === 'bot') {
             messageDiv.innerHTML = `
                 <div class="bot-avatar">🤖</div>
-                <div class="message-content">${message}</div>
+                <div class="message-content">${formattedMessage}</div>
             `;
         } else {
             messageDiv.innerHTML = `
-                <div class="message-content">${message}</div>
+                <div class="message-content">${formattedMessage}</div>
             `;
         }
         
