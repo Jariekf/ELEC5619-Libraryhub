@@ -39,3 +39,5 @@ Designs and optimises databases for book catalogs, user data, reviews, and reser
 
 ### DevOps Engineer - Shuchita Prakash
 Sets up and maintains cloud infrastructure as well as setting up automated testing, deployment, and monitoring processes. Also implements robust data backup and disaster recovery procedures.
+
+
