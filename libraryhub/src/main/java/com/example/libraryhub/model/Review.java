@@ -11,7 +11,7 @@ public class Review {
 
     private String username;
     private String comment;
-    private int rating;
+    private Integer rating;
 
     @ManyToOne
     @JoinColumn(name = "book_id")
@@ -19,7 +19,7 @@ public class Review {
 
     // Constructors
     public Review() {}
-    public Review(String username, String comment, int rating, Book book) {
+    public Review(String username, String comment, Integer rating, Book book) {
         this.username = username;
         this.comment = comment;
         this.rating = rating;
@@ -32,8 +32,8 @@ public class Review {
     public void setUsername(String username) { this.username = username; }
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
-    public int getRating() { return rating; }
-    public void setRating(int rating) { this.rating = rating; }
+    public Integer getRating() { return rating; }
+    public void setRating(Integer rating) { this.rating = rating; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
 }

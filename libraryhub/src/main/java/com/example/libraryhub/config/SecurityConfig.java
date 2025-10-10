@@ -62,10 +62,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/**")) // simple forms; tune later
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/**", "/api/chatbot/**")) // simple forms; tune later
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/api/chatbot/**", "/chat", "/chatbot/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/books/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/books/*/reviews/*/delete").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/admin/books/*/reviews/*/delete").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/books/admin/edit/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/books/admin/edit/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/books/admin/delete/*").hasRole("ADMIN")
                         .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
