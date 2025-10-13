@@ -16,12 +16,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final UserRepository userRepository;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     /** Password encoder for hashing user passwords. */
     @Bean
@@ -62,9 +64,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/**", "/api/chatbot/**")) // simple forms; tune later
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                // Disable CSRF only for API endpoints (REST API), keep it enabled for MVC endpoints (HTML forms)
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/auth/**",           // Login/Register forms
+                        "/api/chatbot/**",    // Chatbot API
+                        "/api/books/**",      // Book REST API
+                        "/api/user/**"        // User REST API
+                ))
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/books/search").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/books/add").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/books/*/edit").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/books/*/delete").hasRole("ADMIN")
+                        .requestMatchers("/books", "/books/**").permitAll()
+                        .requestMatchers("/api/user/current").authenticated()
                         .requestMatchers("/api/chatbot/**", "/chat", "/chatbot/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/books/*/reviews").authenticated()

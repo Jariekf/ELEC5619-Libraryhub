@@ -50,43 +50,47 @@ public class BookController {
                               Model model,
                               @AuthenticationPrincipal UserDetails userDetails,
                               RedirectAttributes redirectAttributes) {
-        Book book = bookService.getBookById(id);
-        if (book == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+        try {
+            Book book = bookService.getBookById(id);
+            if (book == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Book not found.");
+                return "redirect:/books";
+            }
+
+            model.addAttribute("book", book);
+            model.addAttribute("reviews", reviewService.getReviewsForBook(id));
+            model.addAttribute("averageRating", reviewService.getAverageRatingForBook(id));
+            model.addAttribute("newReview", new Review());
+
+            var reservationOpt = reservationService.getReservationForBook(id);
+
+            boolean hasReserved = false;
+            if (userDetails != null && reservationOpt.isPresent()) {
+                hasReserved = reservationOpt.get().getUser() != null &&
+                        reservationOpt.get().getUser().getUsername().equals(userDetails.getUsername());
+            }
+            model.addAttribute("hasReserved", hasReserved);
+            model.addAttribute("currentUserReserved", hasReserved);
+
+            boolean alreadyInWaitingList = false;
+            if (userDetails != null) {
+                alreadyInWaitingList = waitingListService.isUserInWaitingList(id, userDetails.getUsername());
+            }
+            model.addAttribute("alreadyInWaitingList", alreadyInWaitingList);
+
+            List<WaitingList> waitingList = waitingListService.getWaitingList(id);
+            model.addAttribute("waitingList", waitingList);
+
+            if (!book.isAvailable() && reservationOpt.isPresent()) {
+                model.addAttribute("reservation", reservationOpt.get());
+            }
+
+            return "book/book-details";
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", "Error loading book details: " + e.getMessage());
             return "redirect:/books";
         }
-
-        model.addAttribute("book", book);
-        model.addAttribute("reviews", reviewService.getReviewsForBook(id));
-        model.addAttribute("averageRating", reviewService.getAverageRatingForBook(id));
-        model.addAttribute("newReview", new Review());
-
-        var reservationOpt = reservationService.getReservationForBook(id);
-
-        boolean hasReserved = false;
-        if (userDetails != null) {
-            hasReserved = reservationOpt
-                    .map(r -> r.getUser().getUsername().equals(userDetails.getUsername()))
-                    .orElse(false);
-        }
-        model.addAttribute("hasReserved", hasReserved);
-        model.addAttribute("currentUserReserved", hasReserved);
-
-        boolean alreadyInWaitingList = false;
-        if (userDetails != null) {
-            alreadyInWaitingList = waitingListService.isUserInWaitingList(id, userDetails.getUsername());
-        }
-        model.addAttribute("alreadyInWaitingList", alreadyInWaitingList);
-
-        List<WaitingList> waitingList = waitingListService.getWaitingList(id);
-        model.addAttribute("waitingList", waitingList);
-
-        if (!book.isAvailable()) {
-            reservationService.getReservationForBook(id)
-                    .ifPresent(reservation -> model.addAttribute("reservation", reservation));
-        }
-
-        return "book/book-details";
     }
 
 

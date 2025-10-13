@@ -1,418 +1,410 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title>LibraryHub AI Assistant</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - LibraryHub</title>
     <style>
-        .chat-container {
-            max-width: 800px;
-            margin: 0 auto;
-            height: 70vh;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f3f4f6;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        .chat-header {
-            background: linear-gradient(135deg, #007bff, #28a745);
+
+        .header {
+            background-color: #1f2937;
             color: white;
-            padding: 1rem;
-            border-radius: 10px 10px 0 0;
-            text-align: center;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .chat-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border-left: 1px solid #dee2e6;
-            border-right: 1px solid #dee2e6;
-        }
-        .chat-input {
+
+        .header h1 {
+            font-size: 1.5rem;
             display: flex;
-            padding: 1rem;
-            background-color: white;
-            border: 1px solid #dee2e6;
-            border-radius: 0 0 10px 10px;
-            border-top: none;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .chat-input input {
-            flex-grow: 1;
-            border: 1px solid #ced4da;
-            border-radius: 25px;
-            padding: 12px 20px;
-            margin-right: 10px;
-            font-size: 14px;
-        }
-        .chat-input button {
-            border-radius: 25px;
-            padding: 12px 24px;
-            font-weight: 500;
-        }
-        .chat-message {
-            margin-bottom: 1rem;
+
+        .container {
+            flex: 1;
             display: flex;
-            align-items: flex-start;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            overflow: hidden;
         }
-        .user-message {
-            justify-content: flex-end;
-        }
-        .user-message .message-content {
-            background: #007bff;
-            color: white;
-            border-radius: 18px 18px 5px 18px;
-            padding: 12px 16px;
-            max-width: 70%;
-            word-wrap: break-word;
-        }
-        .bot-message .message-content {
+
+        .chat-container {
+            flex: 1;
             background: white;
-            color: #333;
-            border: 1px solid #e0e0e0;
-            border-radius: 18px 18px 18px 5px;
-            padding: 12px 16px;
-            max-width: 70%;
-            word-wrap: break-word;
-            white-space: pre-line;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .bot-avatar {
-            width: 35px;
-            height: 35px;
-            background: #28a745;
+
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+
+        .chat-header h2 {
+            font-size: 1.25rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            margin-left: 0.5rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
-            font-size: 18px;
+            font-size: 1.2rem;
+            flex-shrink: 0;
         }
+
+        .message.user .message-avatar {
+            background-color: #3b82f6;
+        }
+
+        .message.bot .message-avatar {
+            background-color: #10b981;
+        }
+
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
         .typing-indicator {
             display: none;
+            padding: 1rem;
+            gap: 0.5rem;
             align-items: center;
-            padding: 12px 16px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 18px;
-            margin-left: 45px;
         }
-        .typing-dots {
+
+        .typing-indicator.active {
             display: flex;
-            gap: 4px;
         }
+
         .typing-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #999;
-            animation: typing 1.4s infinite ease-in-out;
+            background-color: #9ca3af;
+            animation: bounce 1.4s infinite ease-in-out;
         }
+
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.6; }
-            40% { transform: scale(1); opacity: 1; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
-        .example-queries {
+
+        .chat-input-container {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+
+        .chat-input-form {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 1rem;
         }
-        .example-query {
-            background: #e9ecef;
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .send-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #3b82f6;
+            color: white;
             border: none;
-            border-radius: 15px;
-            padding: 6px 12px;
-            font-size: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        .example-query:hover {
-            background: #dee2e6;
+
+        .send-button:hover {
+            background-color: #2563eb;
         }
-        .message-content ul {
-            margin: 8px 0;
-            padding-left: 20px;
+
+        .send-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
         }
-        .message-content li {
-            margin: 4px 0;
+
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
         }
-        .message-content strong {
-            font-weight: 600;
-            color: #2c3e50;
+
+        .quick-action-btn {
+            padding: 0.5rem 1rem;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .message-content em {
-            font-style: italic;
-            color: #7f8c8d;
+
+        .quick-action-btn:hover {
+            background-color: #f3f4f6;
+            border-color: #3b82f6;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 1rem 2rem;
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
-<body class="bg-light">
-
-<!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="/books">
-            <span class="fs-4">📚 LibraryHub</span>
-        </a>
-        <div class="navbar-nav ms-auto">
-            <a class="nav-link" href="/books">📖 Browse Books</a>
-            <a class="nav-link" href="/customer/dashboard" sec:authorize="hasRole('CUSTOMER')">📋 My Books</a>
-            <a class="nav-link" href="/admin/dashboard" sec:authorize="hasRole('ADMIN')">🔧 Admin</a>
-            <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()" class="d-inline">
-                <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-            </form>
-        </div>
+<body>
+    <div class="header">
+        <h1>🤖 AI Assistant</h1>
     </div>
-</nav>
 
-<div class="container mt-4">
-    <div class="chat-container shadow">
-        <!-- Chat Header -->
-        <div class="chat-header">
-            <h4 class="mb-0">🤖 LibraryHub AI Assistant</h4>
-            <small sec:authorize="hasRole('ADMIN')">Hello, <strong><span sec:authentication="name">Admin</span></strong>! 🔧 I can help with library management, system stats, and more.</small>
-            <small sec:authorize="hasRole('CUSTOMER') and !hasRole('ADMIN')">Hello, <strong><span sec:authentication="name">User</span></strong>! 📚 I'm here to help you find books and learn about our library.</small>
-            <small sec:authorize="isAnonymous()">Welcome! Please log in to get personalized assistance.</small>
-        </div>
+    <a href="/books" class="back-link">← Back to Library</a>
 
-        <!-- Chat Messages Area -->
-        <div class="chat-box" id="chat-box">
-            <!-- Welcome Message -->
-            <div class="chat-message bot-message">
-                <div class="bot-avatar">🤖</div>
-                <div class="message-content">
-                    <div sec:authorize="hasRole('ADMIN')">
-                        Hi! I'm your LibraryHub AI Assistant with admin capabilities. I can help you with:
-                        
-                        🔧 System statistics and admin dashboard
-                        📈 User management and operational insights  
-                        💰 Budget and financial information
-                        📚 Finding books and library policies
-                        📖 Book series recommendations
-                        
-                        Try asking me something!
-                    </div>
-                    <div sec:authorize="hasRole('CUSTOMER') and !hasRole('ADMIN')">
-                        Hi! I'm your LibraryHub AI Assistant. I can help you with:
-                        
-                        📚 Finding books by title, author, or genre
-                        ❓ Library policies and hours
-                        📖 Book series recommendations
-                        🔍 General library questions
-                        
-                        Try asking me something!
-                    </div>
-                    <div sec:authorize="isAnonymous()">
-                        Hi! I'm the LibraryHub AI Assistant, but you need to log in to access my full features. Please <a href="/auth/login">log in</a> to get personalized assistance!
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>
+                    LibraryHub Assistant
+                    <span class="status"></span>
+                </h2>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+                    Ask me anything about books, reservations, or the library!
+                </p>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-avatar">🤖</div>
+                    <div>
+                        <div class="message-content">
+                            Hello! I'm your LibraryHub AI assistant. How can I help you today?
+                        </div>
+                        <div class="message-time" id="initialTime"></div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Example Queries -->
-            <div class="example-queries" id="example-queries">
-                <button class="example-query" onclick="sendExampleQuery('What are your library hours?')">📅 Library Hours</button>
-                <button class="example-query" onclick="sendExampleQuery('Find books by J.K. Rowling')">🔍 Find Books</button>
-                <button class="example-query" onclick="sendExampleQuery('Recommend a fantasy series')">📚 Get Recommendations</button>
-                <button class="example-query" onclick="sendExampleQuery('How do I reserve a book?')">❓ How to Reserve</button>
-                <button class="example-query" onclick="sendExampleQuery('What are your borrowing policies?')">📋 Policies</button>
-                <button class="example-query" onclick="sendExampleQuery('What are your fine rates?')">💰 Fine Info</button>
-                <!-- User-specific queries -->
-                <button class="example-query" onclick="sendExampleQuery('What books do I have?')" sec:authorize="isAuthenticated()">📚 My Books</button>
-                <button class="example-query" onclick="sendExampleQuery('What am I waiting for?')" sec:authorize="isAuthenticated()">⏳ My Waitlist</button>
-                <button class="example-query" onclick="sendExampleQuery('My reading history')" sec:authorize="isAuthenticated()">📖 My History</button>
-                <button class="example-query" onclick="sendExampleQuery('Recommend something for me')" sec:authorize="isAuthenticated()">🎯 Personal Recs</button>
-                <!-- Admin-specific queries -->
-                <button class="example-query" onclick="sendExampleQuery('Show admin dashboard')" sec:authorize="hasRole('ADMIN')">🔧 Admin Dashboard</button>
-                <button class="example-query" onclick="sendExampleQuery('System statistics')" sec:authorize="hasRole('ADMIN')">📊 System Stats</button>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span style="margin-left: 0.5rem; color: #6b7280; font-size: 0.875rem;">AI is thinking...</span>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="sendQuickMessage('How do I reserve a book?')">📚 How to reserve?</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('What books are available?')">📖 Available books</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('How does the waiting list work?')">⏳ Waiting list</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Recommend a good book')">💡 Recommend</button>
+                </div>
+                <form class="chat-input-form" id="chatForm">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="messageInput"
+                        placeholder="Type your message..."
+                        autocomplete="off"
+                        required
+                    />
+                    <button type="submit" class="send-button" id="sendButton">
+                        Send 📤
+                    </button>
+                </form>
             </div>
         </div>
-
-        <!-- Typing Indicator -->
-        <div class="typing-indicator" id="typing-indicator">
-            <div class="typing-dots">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-            <span class="ms-2 text-muted">AI is thinking...</span>
-        </div>
-
-        <!-- Chat Input -->
-        <div class="chat-input">
-            <input type="text" id="message-input" class="form-control" 
-                   placeholder="Ask me about books, library hours, policies, or anything else..." 
-                   maxlength="500">
-            <button class="btn btn-primary" onclick="sendMessage()" id="send-button">
-                <span id="send-text">Send</span>
-                <span id="send-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-            </button>
-        </div>
     </div>
-    
-    <!-- Footer Info -->
-    <div class="text-center mt-3">
-        <small class="text-muted">
-            💡 Powered by Llama 3.2 AI • <a href="/books" class="text-decoration-none">Browse Books</a> • 
-            <a href="/api/chatbot/health" class="text-decoration-none" target="_blank">System Status</a>
-        </small>
-    </div>
-</div>
 
-<script>
-    let isTyping = false;
-    
-    // Get CSRF token for secure requests
-    function getCsrfToken() {
-        const token = document.querySelector('meta[name="_csrf"]');
-        return token ? token.getAttribute('content') : null;
-    }
-    
-    function getCsrfHeader() {
-        const header = document.querySelector('meta[name="_csrf_header"]');
-        return header ? header.getAttribute('content') : null;
-    }
-    
-    async function sendMessage() {
-        const input = document.getElementById('message-input');
-        const message = input.value.trim();
-        if (message === '' || isTyping) return;
+    <script>
+        // Set initial time
+        document.getElementById('initialTime').textContent = new Date().toLocaleTimeString();
 
-        appendMessage(message, 'user');
-        input.value = '';
-        hideExampleQueries();
-        showTypingIndicator();
-        setButtonState(true);
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
 
-        try {
-            const headers = {
-                'Content-Type': 'application/json'
-            };
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
             
-            // Add CSRF token if available
-            const csrfToken = getCsrfToken();
-            const csrfHeader = getCsrfHeader();
-            if (csrfToken && csrfHeader) {
-                headers[csrfHeader] = csrfToken;
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🤖';
+            
+            const contentWrapper = document.createElement('div');
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = content;
+            
+            const messageTime = document.createElement('div');
+            messageTime.className = 'message-time';
+            messageTime.textContent = new Date().toLocaleTimeString();
+            
+            contentWrapper.appendChild(messageContent);
+            contentWrapper.appendChild(messageTime);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentWrapper);
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Send message
+        async function sendMessage(message) {
+            if (!message.trim()) return;
+
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
+            sendButton.disabled = true;
+            typingIndicator.classList.add('active');
+
+            try {
+                const response = await fetch('/api/chatbot/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const data = await response.json();
+                addMessage(data.response || 'Sorry, I could not process your request.');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error connecting to the AI service. Please try again later.');
+            } finally {
+                typingIndicator.classList.remove('active');
+                sendButton.disabled = false;
+                messageInput.focus();
             }
-            
-            const response = await fetch('/api/chatbot/send', {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({ message: message })
-            });
+        }
 
-            const data = await response.json();
-            
-            if (response.ok) {
-                appendMessage(data.response || 'Sorry, I didn\'t get a response.', 'bot');
-            } else {
-                appendMessage('Sorry, I\'m having trouble right now. Please try again later.', 'bot');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            appendMessage('Sorry, there was a connection error. Please check your internet and try again.', 'bot');
-        } finally {
-            hideTypingIndicator();
-            setButtonState(false);
+        // Quick message
+        function sendQuickMessage(message) {
+            messageInput.value = message;
+            sendMessage(message);
         }
-    }
-    
-    function sendExampleQuery(query) {
-        document.getElementById('message-input').value = query;
-        sendMessage();
-    }
 
-    // Function to convert basic markdown to HTML
-    function markdownToHtml(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold** -> <strong>bold</strong>
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')             // *italic* -> <em>italic</em>
-            .replace(/\n/g, '<br>')                          // newlines to <br>
-            .replace(/• (.*?)(<br>|$)/g, '<li>$1</li>')    // • items to <li>
-            .replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');        // wrap <li> in <ul>
-    }
-    
-    function appendMessage(message, sender) {
-        const chatBox = document.getElementById('chat-box');
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('chat-message', sender + '-message');
-        
-        // Convert markdown formatting to HTML for bot messages
-        const formattedMessage = sender === 'bot' ? markdownToHtml(message) : message;
-        
-        if (sender === 'bot') {
-            messageDiv.innerHTML = `
-                <div class="bot-avatar">🤖</div>
-                <div class="message-content">${formattedMessage}</div>
-            `;
-        } else {
-            messageDiv.innerHTML = `
-                <div class="message-content">${formattedMessage}</div>
-            `;
-        }
-        
-        chatBox.appendChild(messageDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-    
-    function showTypingIndicator() {
-        isTyping = true;
-        document.getElementById('typing-indicator').style.display = 'flex';
-        const chatBox = document.getElementById('chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-    
-    function hideTypingIndicator() {
-        isTyping = false;
-        document.getElementById('typing-indicator').style.display = 'none';
-    }
-    
-    function setButtonState(loading) {
-        const button = document.getElementById('send-button');
-        const text = document.getElementById('send-text');
-        const spinner = document.getElementById('send-spinner');
-        const input = document.getElementById('message-input');
-        
-        if (loading) {
-            button.disabled = true;
-            text.classList.add('d-none');
-            spinner.classList.remove('d-none');
-            input.disabled = true;
-        } else {
-            button.disabled = false;
-            text.classList.remove('d-none');
-            spinner.classList.add('d-none');
-            input.disabled = false;
-            input.focus();
-        }
-    }
-    
-    function hideExampleQueries() {
-        const queries = document.getElementById('example-queries');
-        if (queries) {
-            queries.style.display = 'none';
-        }
-    }
-
-    // Event listeners
-    document.getElementById('message-input').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        // Form submit
+        chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            sendMessage();
-        }
-    });
-    
-    // Auto-focus input on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('message-input').focus();
-    });
-</script>
+            sendMessage(messageInput.value);
+        });
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+        // Focus input on load
+        messageInput.focus();
+    </script>
 </body>
 </html>
