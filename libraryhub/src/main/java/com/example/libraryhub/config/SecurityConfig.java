@@ -3,12 +3,16 @@ package com.example.libraryhub.config;
 import com.example.libraryhub.model.Admin;
 import com.example.libraryhub.model.User;
 import com.example.libraryhub.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,106 +22,95 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /** Password encoder for hashing user passwords. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /** Bridge AuthenticationManager out of Spring Boot auto config. */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
     }
 
     @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService());
+        provider.setPasswordEncoder(passwordEncoder());
+        provider.setHideUserNotFoundExceptions(false);
+        return provider;
+    }
+
+    @Bean
     public UserDetailsService userDetailsService() {
-        return (String loginIdentifier) -> {
-            User u = userRepository.findByUsername(loginIdentifier)
-                    .or(() -> userRepository.findByEmail(loginIdentifier))
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + loginIdentifier));
+        return (String username) -> {
+            User u = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            // Set authorities by role; here we use ADMIN for Admin subclass, otherwise CUSTOMER
             String role = (u instanceof Admin) ? "ADMIN" : "CUSTOMER";
             UserDetails details = org.springframework.security.core.userdetails.User
                     .withUsername(u.getUsername())
-                    .password(u.getPasswordHash())
-                    .roles(role)
+                    .password(u.getPasswordHash())   // ensure your User has getPasswordHash()
+                    .roles(role)                     // results in "ROLE_ADMIN"/"ROLE_CUSTOMER"
                     .disabled(!u.isActive())
                     .build();
             return details;
         };
     }
 
+    /** HTTP security: allow auth pages, require login elsewhere, enable form login + logout. */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                .csrf(csrf -> csrf.ignoringRequestMatchers(
-                        "/auth/**",
-                        "/api/**",
-                        "/chatbot/**"
-                ))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/**", "/api/**")) // REST endpoints use tokenless auth
                 .authorizeHttpRequests(reg -> reg
-                        // Public endpoints
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
-
-                        // API - Books (public read, admin write)
-                        .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/books/search").permitAll()
-
-                        // API - Admin operations
-                        .requestMatchers(HttpMethod.POST, "/api/books/add").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/books/*/edit").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/books/*/delete").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/admin/books/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // API - User operations
-                        .requestMatchers("/api/user/current").authenticated()
-
-                        // API - Reviews
-                        .requestMatchers(HttpMethod.POST, "/api/books/*/reviews").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
-
-                        // API - Reservations (allow both CUSTOMER and ADMIN)
-                        .requestMatchers(HttpMethod.POST, "/api/books/*/reserve").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/*/reserve").hasAnyRole("CUSTOMER", "ADMIN")
-
-                        // API - Waiting List (allow both CUSTOMER and ADMIN)
-                        .requestMatchers(HttpMethod.POST, "/api/books/*/waitinglist").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/*/waitinglist").hasAnyRole("CUSTOMER", "ADMIN")
-
-                        // API - Chatbot
-                        .requestMatchers("/api/chatbot/**", "/chat", "/chatbot/**").authenticated()
-
-                        // MVC endpoints (Thymeleaf)
-                        .requestMatchers("/books", "/books/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
-                        .requestMatchers(HttpMethod.POST, "/books/*/reviews").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/books/*/reviews/*/delete").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/admin/books/*/reviews/*/delete").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/books/admin/edit/*").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/books/admin/edit/*").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/books/admin/delete/*").hasRole("ADMIN")
-                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
                 .formLogin(form -> form
                         .loginPage("/auth/login").permitAll()
                         .loginProcessingUrl("/auth/login")
-                        .defaultSuccessUrl("/books", true)
-                        .failureUrl("/auth/login?error"))
+                        .successHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.setContentType("application/json");
+                            Map<String, Object> body = new HashMap<>();
+                            body.put("message", "Login successful");
+                            objectMapper.writeValue(response.getWriter(), body);
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            Map<String, String> body = new HashMap<>();
+                            if (exception instanceof UsernameNotFoundException) {
+                                body.put("error", "Username does not exist");
+                            } else if (exception instanceof BadCredentialsException) {
+                                body.put("error", "Incorrect password");
+                            } else {
+                                body.put("error", "Login failed");
+                            }
+                            objectMapper.writeValue(response.getWriter(), body);
+                        }))
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
+                        .logoutUrl("/auth/logout")                        // POST /auth/logout
                         .logoutSuccessUrl("/auth/login?logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll());
+        http.authenticationProvider(authenticationProvider());
         return http.build();
     }
 }

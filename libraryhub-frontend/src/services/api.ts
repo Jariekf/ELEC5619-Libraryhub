@@ -3,12 +3,17 @@ import type { AxiosInstance } from 'axios';
 import type {
   Book,
   User,
+  UserProfile,
   Review,
   Reservation,
   WaitingList,
   LoginRequest,
   RegisterRequest,
-  DashboardStats
+  UpdateProfileRequest,
+  DashboardStats,
+  AdminManagedUser,
+  AdminCreateUserPayload,
+  AdminUpdateUserPayload
 } from '../types';
 
 class ApiService {
@@ -35,9 +40,6 @@ class ApiService {
     this.api.interceptors.response.use(
         (response) => response,
         (error) => {
-          if (error.response?.status === 401) {
-            window.location.href = '/login';
-          }
           return Promise.reject(error);
         }
     );
@@ -76,6 +78,31 @@ class ApiService {
   async getCurrentUser(): Promise<User> {
     const response = await this.api.get('/api/user/current');
     return response.data;
+  }
+
+  async getProfile(): Promise<UserProfile> {
+    const response = await this.api.get('/api/user/profile');
+    return response.data;
+  }
+
+  async updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
+    const payload: UpdateProfileRequest = {};
+    if (data.username && data.username.trim()) {
+      payload.username = data.username.trim();
+    }
+    if (data.email && data.email.trim()) {
+      payload.email = data.email.trim();
+    }
+    if (data.password && data.password.trim()) {
+      payload.password = data.password;
+    }
+
+    const response = await this.api.put('/api/user/profile', payload);
+    return response.data;
+  }
+
+  async updateCurrentUser(update: { email?: string; password?: string }) {
+    return this.api.put('/api/user/current', update);
   }
 
   // Book APIs
@@ -123,9 +150,15 @@ class ApiService {
     return response.data;
   }
 
-  // 修复：匹配后端的 POST /{id}/delete 端点
   async deleteBook(id: number): Promise<void> {
     await this.api.post(`/api/books/${id}/delete`);
+  }
+
+  async searchBooks(query: string): Promise<Book[]> {
+    const response = await this.api.post('/api/books/search', null, {
+      params: { title: query },
+    });
+    return Array.isArray(response.data) ? response.data : response.data.books || [];
   }
 
   // Review APIs
@@ -192,14 +225,23 @@ class ApiService {
     return Array.isArray(response.data) ? response.data : response.data.reservations || [];
   }
 
-  async getAllCustomers(): Promise<User[]> {
-    const response = await this.api.get('/api/admin/customers');
-    return Array.isArray(response.data) ? response.data : response.data.customers || [];
+  async getAdminUsers(): Promise<AdminManagedUser[]> {
+    const response = await this.api.get('/api/admin/users');
+    return Array.isArray(response.data) ? response.data : response.data.users || [];
   }
 
-  async getCustomerById(userId: number): Promise<User> {
-    const response = await this.api.get(`/api/admin/customers/${userId}`);
+  async createAdminUser(payload: AdminCreateUserPayload): Promise<AdminManagedUser> {
+    const response = await this.api.post('/api/admin/users', payload);
     return response.data;
+  }
+
+  async updateAdminUser(userId: number, payload: AdminUpdateUserPayload): Promise<AdminManagedUser> {
+    const response = await this.api.put(`/api/admin/users/${userId}`, payload);
+    return response.data;
+  }
+
+  async deleteAdminUser(userId: number): Promise<void> {
+    await this.api.delete(`/api/admin/users/${userId}`);
   }
 
   async deleteReservation(reservationId: number): Promise<{ message: string; status: string }> {

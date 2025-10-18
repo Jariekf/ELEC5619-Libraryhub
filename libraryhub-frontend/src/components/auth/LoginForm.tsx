@@ -22,7 +22,8 @@ const LoginForm: React.FC = () => {
       await login(formData);
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const message = err instanceof Error ? err.message : 'Login failed! Please check username and password.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

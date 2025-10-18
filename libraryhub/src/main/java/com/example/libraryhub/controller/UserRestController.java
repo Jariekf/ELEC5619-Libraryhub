@@ -1,10 +1,13 @@
 package com.example.libraryhub.controller;
 
+import com.example.libraryhub.dto.UserProfileResponse;
+import com.example.libraryhub.dto.UserProfileUpdateRequest;
 import com.example.libraryhub.model.Admin;
 import com.example.libraryhub.model.Reservation;
 import com.example.libraryhub.model.User;
 import com.example.libraryhub.repository.ReservationRepository;
 import com.example.libraryhub.repository.UserRepository;
+import com.example.libraryhub.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +27,7 @@ public class UserRestController {
 
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
+    private final ProfileService profileService;
 
     @GetMapping("/current")
     public ResponseEntity<Map<String, Object>> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
@@ -43,16 +47,34 @@ public class UserRestController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UserProfileResponse profile = profileService.getProfile(userDetails.getUsername());
+        return ResponseEntity.ok(profile);
+    }
+
+    @PutMapping(value = "/profile", consumes = "application/json")
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody UserProfileUpdateRequest request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UserProfileResponse updated = profileService.updateProfile(userDetails.getUsername(), request);
+        return ResponseEntity.ok(updated);
+    }
+
     @GetMapping("/reservations")
     public ResponseEntity<List<Map<String, Object>>> getUserReservations(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             return ResponseEntity.status(401).build();
         }
 
-        // Get all reservations for the current user using the existing repository method
         List<Reservation> reservations = reservationRepository.findWithBookByUser_Username(userDetails.getUsername());
 
-        // Convert to response format
         List<Map<String, Object>> response = reservations.stream()
                 .map(reservation -> {
                     Map<String, Object> map = new HashMap<>();
@@ -67,5 +89,12 @@ public class UserRestController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", ex.getMessage());
+        return ResponseEntity.badRequest().body(body);
     }
 }

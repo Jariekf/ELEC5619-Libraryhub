@@ -2,7 +2,6 @@ package com.example.libraryhub.controller;
 
 import com.example.libraryhub.model.User;
 import com.example.libraryhub.model.Reservation;
-import com.example.libraryhub.model.WaitingList;
 import com.example.libraryhub.model.Role;
 import com.example.libraryhub.service.BookService;
 import com.example.libraryhub.service.ReservationService;
@@ -59,7 +58,7 @@ public class AdminRestController {
 
     @GetMapping("/customers")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<CustomerDTO>> getAllCustomers() {  // 注意返回类型是 CustomerDTO
+    public ResponseEntity<List<CustomerDTO>> getAllCustomers() {  // Return type is CustomerDTO
         List<Reservation> allReservations = reservationRepository.findAllWithDetails();
 
         List<User> allUsers = userRepository.findAll();

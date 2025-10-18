@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
                     </button>
 
                     <button
-                        onClick={() => navigate('/admin/customers')}
+                        onClick={() => navigate('/admin/users')}
                         className="w-full p-6 bg-white rounded-lg shadow hover:shadow-md transition text-left border border-gray-200 hover:border-blue-400"
                     >
                         <div className="flex items-start gap-4">
@@ -56,8 +56,23 @@ const Dashboard: React.FC = () => {
                                 <Users className="text-green-600" size={24} />
                             </div>
                             <div>
-                                <h5 className="text-lg font-semibold mb-2 text-gray-900">View All Customers</h5>
-                                <p className="text-gray-600">Browse through the list of all registered customers in the system.</p>
+                                <h5 className="text-lg font-semibold mb-2 text-gray-900">Manage Users</h5>
+                                <p className="text-gray-600">View, create, update, or remove user accounts and assign roles.</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/admin/waitinglist')}
+                        className="w-full p-6 bg-white rounded-lg shadow hover:shadow-md transition text-left border border-gray-200 hover:border-blue-400"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-orange-100 rounded-lg">
+                                <Users className="text-orange-600" size={24} />
+                            </div>
+                            <div>
+                                <h5 className="text-lg font-semibold mb-2 text-gray-900">Manage Waiting Lists</h5>
+                                <p className="text-gray-600">Inspect waiting list entries for each book and remove users when needed.</p>
                             </div>
                         </div>
                     </button>

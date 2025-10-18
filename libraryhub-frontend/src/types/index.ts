@@ -6,6 +6,11 @@ export interface User {
   reservations?: Reservation[];
 }
 
+export interface UserProfile extends User {
+  active: boolean;
+  createdAt: string;
+}
+
 export interface Book {
   id: number;
   title: string;
@@ -56,9 +61,40 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface UpdateProfileRequest {
+  username?: string;
+  email?: string;
+  password?: string;
+}
+
 export interface DashboardStats {
   totalBooks: number;
   totalUsers: number;
   totalReservations: number;
   availableBooks: number;
+}
+
+export interface AdminManagedUser {
+  id: number;
+  username: string;
+  email: string;
+  role: 'CUSTOMER' | 'ADMIN';
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AdminCreateUserPayload {
+  username: string;
+  email: string;
+  password: string;
+  role: 'CUSTOMER' | 'ADMIN';
+  active: boolean;
+}
+
+export interface AdminUpdateUserPayload {
+  username?: string;
+  email?: string;
+  password?: string;
+  role?: 'CUSTOMER' | 'ADMIN';
+  active?: boolean;
 }

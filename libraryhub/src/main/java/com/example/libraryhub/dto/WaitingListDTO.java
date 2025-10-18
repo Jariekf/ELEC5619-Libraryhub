@@ -24,7 +24,8 @@ public class WaitingListDTO {
                 .bookTitle(waitingList.getBook() != null ? waitingList.getBook().getTitle() : null)
                 .userId(waitingList.getUser() != null ? waitingList.getUser().getId() : null)
                 .username(waitingList.getUser() != null ? waitingList.getUser().getUsername() : "Unknown")
-                .joinedDate(waitingList.getJoinDate())  // 改为 getJoinDate()
+                .joinedDate(waitingList.getJoinDate())  // Use getJoinDate()
                 .build();
     }
 }
+

@@ -2,10 +2,12 @@ package com.example.libraryhub.repository;
 
 import com.example.libraryhub.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 
 /** JPA repository for User aggregate. */
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -17,6 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.reservations r LEFT JOIN FETCH r.book WHERE TYPE(u) = Customer ORDER BY u.username")
-    List<User> findAllCustomersWithReservations();
+    @Modifying
+    @Query(value = "UPDATE users SET role = :role WHERE id = :id", nativeQuery = true)
+    void updateUserRole(@Param("id") Long id, @Param("role") String role);
 }

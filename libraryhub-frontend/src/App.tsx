@@ -7,13 +7,15 @@ import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import Chatbot from './components/chatbot/Chatbot';
 import Dashboard from './pages/admin/Dashboard';
-import Customers from './pages/admin/Customers';
+import ManageUsers from './pages/admin/Customers';
 import Reservations from './pages/admin/Reservations';
+import ManageWaitingList from './pages/admin/WaitingList';
 import BookList from './pages/books/BookList';
 import BookDetails from './pages/books/BookDetails';
 import AddBook from './pages/books/AddBook';
 import EditBook from './pages/books/EditBook';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import ProfilePage from './components/profile/ProfilePage';
 
 // Load Bootstrap JS dynamically
 const loadBootstrap = () => {
@@ -189,6 +191,15 @@ const AppContent: React.FC = () => {
                         }
                     />
 
+                    <Route
+                        path="/profile"
+                        element={
+                            <ProtectedRoute>
+                                <ProfilePage />
+                            </ProtectedRoute>
+                        }
+                    />
+
                     {/* Chatbot - Public access */}
                     <Route
                         path="/chatbot"
@@ -219,10 +230,10 @@ const AppContent: React.FC = () => {
                         }
                     />
                     <Route
-                        path="/admin/customers"
+                        path="/admin/users"
                         element={
                             <AdminRoute>
-                                <Customers />
+                                <ManageUsers />
                             </AdminRoute>
                         }
                     />
@@ -231,6 +242,14 @@ const AppContent: React.FC = () => {
                         element={
                             <AdminRoute>
                                 <Reservations />
+                            </AdminRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/waitinglist"
+                        element={
+                            <AdminRoute>
+                                <ManageWaitingList />
                             </AdminRoute>
                         }
                     />

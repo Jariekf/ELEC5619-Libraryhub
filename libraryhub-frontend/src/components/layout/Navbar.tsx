@@ -8,6 +8,8 @@ const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const isLoggedIn = isAuthenticated && Boolean(user?.username);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -43,7 +45,7 @@ const Navbar: React.FC = () => {
                 >
                   Books
                 </Link>
-                {isAuthenticated && (
+                {isLoggedIn ? (
                     <>
                       <Link
                           to="/dashboard"
@@ -52,26 +54,33 @@ const Navbar: React.FC = () => {
                         My Dashboard
                       </Link>
                       {user?.role === 'ADMIN' && (
-                          <>
-                            <Link
-                                to="/admin/dashboard"
-                                className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                            >
-                              Admin Panel
-                            </Link>
-                            <Link
-                                to="/books/add"
-                                className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                            >
-                              Add Book
-                            </Link>
-                          </>
+                          <Link
+                              to="/admin/dashboard"
+                              className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                          >
+                            Admin Panel
+                          </Link>
                       )}
                       <Link
                           to="/chatbot"
                           className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                       >
                         🤖 AI Assistant
+                      </Link>
+                    </>
+                ) : (
+                    <>
+                      <Link
+                          to="/register"
+                          className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      >
+                        Register
+                      </Link>
+                      <Link
+                          to="/login"
+                          className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      >
+                        Sign In
                       </Link>
                     </>
                 )}
@@ -82,7 +91,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-4">
 
               {/* Profile dropdown */}
-              {isAuthenticated ? (
+              {isLoggedIn ? (
                   <div className="relative">
                     <button
                         onClick={toggleProfile}
@@ -111,6 +120,13 @@ const Navbar: React.FC = () => {
                               onClick={() => setIsProfileOpen(false)}
                           >
                             My Dashboard
+                          </Link>
+                          <Link
+                              to="/profile"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setIsProfileOpen(false)}
+                          >
+                            Profile
                           </Link>
                           {user?.role === 'ADMIN' && (
                               <Link
@@ -168,7 +184,7 @@ const Navbar: React.FC = () => {
                   >
                     Books
                   </Link>
-                  {isAuthenticated && (
+                  {isLoggedIn ? (
                       <>
                         <Link
                             to="/dashboard"
@@ -193,6 +209,23 @@ const Navbar: React.FC = () => {
                               Admin Panel
                             </Link>
                         )}
+                      </>
+                  ) : (
+                      <>
+                        <Link
+                            to="/register"
+                            className="text-gray-500 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                          Register
+                        </Link>
+                        <Link
+                            to="/login"
+                            className="text-gray-500 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                          Sign In
+                        </Link>
                       </>
                   )}
                 </div>

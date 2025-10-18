@@ -21,6 +21,13 @@ const RegisterForm: React.FC = () => {
     setError('');
 
     // Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Invalid email address. Please enter a valid email.');
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password !== confirmPassword) {
       setError('Passwords do not match');
       setIsLoading(false);
