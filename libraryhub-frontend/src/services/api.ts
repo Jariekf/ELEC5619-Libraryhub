@@ -1,13 +1,14 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import type { 
-  Book, 
-  User, 
-  Review, 
-  Reservation, 
-  WaitingList, 
-  LoginRequest, 
-  RegisterRequest
+import type {
+  Book,
+  User,
+  Review,
+  Reservation,
+  WaitingList,
+  LoginRequest,
+  RegisterRequest,
+  DashboardStats
 } from '../types';
 
 class ApiService {
@@ -16,42 +17,38 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: 'http://localhost:8080',
-      withCredentials: true, // Important for Spring Security session management
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Add request interceptor to handle authentication
     this.api.interceptors.request.use(
-      (config) => {
-        // Spring Security handles authentication via cookies/session
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
+        (config) => {
+          return config;
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
     );
 
-    // Add response interceptor to handle errors
     this.api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          // Redirect to login page
-          window.location.href = '/login';
+        (response) => response,
+        (error) => {
+          if (error.response?.status === 401) {
+            window.location.href = '/login';
+          }
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
-      }
     );
   }
 
-  // Authentication endpoints
+  // Auth APIs
   async login(credentials: LoginRequest): Promise<void> {
     const formData = new FormData();
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
-    
+
     await this.api.post('/auth/login', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -64,7 +61,7 @@ class ApiService {
     formData.append('username', userData.username);
     formData.append('email', userData.email);
     formData.append('password', userData.password);
-    
+
     await this.api.post('/auth/register', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -81,17 +78,10 @@ class ApiService {
     return response.data;
   }
 
-  // Book endpoints
+  // Book APIs
   async getBooks(): Promise<Book[]> {
-    try {
-      const response = await this.api.get('/api/books');
-      console.log('Books API response:', response.data);
-      // Handle both direct array response and wrapped response
-      return Array.isArray(response.data) ? response.data : response.data.books || [];
-    } catch (error) {
-      console.error('Error fetching books:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/books');
+    return Array.isArray(response.data) ? response.data : response.data.books || [];
   }
 
   async getBookById(id: number): Promise<Book> {
@@ -99,154 +89,180 @@ class ApiService {
     return response.data;
   }
 
-  async addBook(book: { title: string; author: string; genre: string; available: boolean }): Promise<void> {
-    await this.api.post('/api/books/add', null, {
-      params: book
+  async addBook(book: Omit<Book, 'id'>): Promise<Book> {
+    const params = new URLSearchParams();
+    params.append('title', book.title);
+    params.append('author', book.author);
+    params.append('genre', book.genre);
+    if (book.isbn) params.append('isbn', book.isbn);
+    if (book.description) params.append('description', book.description);
+    params.append('available', book.available.toString());
+
+    const response = await this.api.post('/api/books/add', params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
+    return response.data;
   }
 
-  async updateBook(id: number, book: { title: string; author: string; genre: string; available: boolean }): Promise<void> {
-    await this.api.post(`/api/books/${id}/edit`, null, {
-      params: book
+  async updateBook(id: number, book: Partial<Book>): Promise<Book> {
+    const params = new URLSearchParams();
+    if (book.title) params.append('title', book.title);
+    if (book.author) params.append('author', book.author);
+    if (book.genre) params.append('genre', book.genre);
+    if (book.isbn) params.append('isbn', book.isbn);
+    if (book.description) params.append('description', book.description);
+    if (book.available !== undefined) params.append('available', book.available.toString());
+
+    const response = await this.api.post(`/api/books/${id}/edit`, params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
+    return response.data;
   }
 
+  // 修复：匹配后端的 POST /{id}/delete 端点
   async deleteBook(id: number): Promise<void> {
     await this.api.post(`/api/books/${id}/delete`);
   }
 
-  async searchBooks(query: string): Promise<Book[]> {
-    const response = await this.api.post('/api/books/search', null, {
-      params: { title: query }
-    });
-    // Handle both direct array response and wrapped response
-    return Array.isArray(response.data) ? response.data : response.data.books || [];
-  }
-
-  async reserveBook(bookId: number): Promise<void> {
-    await this.api.post(`/books/${bookId}/reserve`);
-  }
-
-  async returnBook(bookId: number): Promise<void> {
-    await this.api.post(`/books/${bookId}/return`);
-  }
-
-  async joinWaitingList(bookId: number): Promise<void> {
-    await this.api.post(`/books/${bookId}/join-waiting-list`);
-  }
-
-  async cancelWaiting(bookId: number): Promise<void> {
-    await this.api.post(`/books/${bookId}/cancel-waiting`);
-  }
-
-  async submitReview(bookId: number, review: { rating: number; comment: string }): Promise<void> {
-    await this.api.post(`/books/${bookId}/reviews`, null, {
-      params: review
-    });
-  }
-
-  async deleteReview(bookId: number, reviewId: number): Promise<void> {
-    await this.api.post(`/books/${bookId}/reviews/${reviewId}/delete`);
-  }
-
-  // Review endpoints
+  // Review APIs
   async getReviewsForBook(bookId: number): Promise<Review[]> {
-    const response = await this.api.get(`/books/${bookId}/reviews`);
-    return response.data;
+    const response = await this.api.get(`/api/books/${bookId}/reviews`);
+    return Array.isArray(response.data) ? response.data : response.data.reviews || [];
   }
 
-  async submitReview(bookId: number, review: { rating: number; comment: string }): Promise<void> {
-    const formData = new FormData();
-    formData.append('rating', review.rating.toString());
-    formData.append('comment', review.comment);
-    
-    await this.api.post(`/books/${bookId}/reviews`, formData, {
+  async submitReview(bookId: number, rating: number, comment: string): Promise<Review> {
+    const params = new URLSearchParams();
+    params.append('rating', String(rating));
+    params.append('comment', comment);
+
+    const response = await this.api.post(`/api/books/${bookId}/reviews`, params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
-  }
-
-  async deleteReview(bookId: number, reviewId: number): Promise<void> {
-    await this.api.post(`/books/${bookId}/reviews/${reviewId}/delete`);
-  }
-
-  // Waiting list endpoints
-  async joinWaitingList(bookId: number): Promise<WaitingList> {
-    const response = await this.api.post(`/api/waitinglist/book/${bookId}`);
     return response.data;
   }
 
-  async getWaitingList(bookId: number): Promise<WaitingList[]> {
-    const response = await this.api.get(`/api/waitinglist/book/${bookId}`);
+  async deleteReview(reviewId: number): Promise<void> {
+    await this.api.delete(`/api/reviews/${reviewId}`);
+  }
+
+  // Reservation APIs
+  async reserveBook(bookId: number): Promise<Reservation> {
+    const response = await this.api.post(`/api/books/${bookId}/reserve`);
+    return response.data;
+  }
+
+  async cancelReservation(bookId: number): Promise<void> {
+    await this.api.delete(`/api/books/${bookId}/reserve`);
+  }
+
+  async getUserReservations(): Promise<Reservation[]> {
+    const response = await this.api.get('/api/user/reservations');
+    return Array.isArray(response.data) ? response.data : response.data.reservations || [];
+  }
+
+  // Waiting List APIs
+  async joinWaitingList(bookId: number): Promise<WaitingList> {
+    const response = await this.api.post(`/api/books/${bookId}/waitinglist`);
     return response.data;
   }
 
   async cancelWaiting(bookId: number): Promise<void> {
-    await this.api.delete(`/api/waitinglist/book/${bookId}`);
+    await this.api.delete(`/api/books/${bookId}/waitinglist`);
   }
 
-  // Reservation endpoints
-  async getUserReservations(): Promise<Reservation[]> {
-    const response = await this.api.get('/customer/dashboard');
-    return response.data.reservations || [];
+  async getWaitingListForBook(bookId: number): Promise<WaitingList[]> {
+    const response = await this.api.get(`/api/books/${bookId}/waitinglist`);
+    return Array.isArray(response.data) ? response.data : response.data.waitingList || [];
   }
 
-  // Chatbot endpoints
-  async sendChatMessage(message: string): Promise<{ response: string; user: string }> {
-    const response = await this.api.post('/api/chatbot/send', { message });
+  // Admin APIs
+  async getDashboardStats(): Promise<DashboardStats> {
+    const response = await this.api.get('/api/admin/stats');
     return response.data;
   }
 
-  async getChatbotHealth(): Promise<{ status: string; service: string; capabilities: string }> {
-    const response = await this.api.get('/api/chatbot/health');
-    return response.data;
-  }
-
-  // Admin endpoints
   async getAllReservations(): Promise<Reservation[]> {
-    const response = await this.api.get('/admin/reservations');
-    return response.data.reservations || [];
+    const response = await this.api.get('/api/admin/reservations');
+    return Array.isArray(response.data) ? response.data : response.data.reservations || [];
   }
 
   async getAllCustomers(): Promise<User[]> {
-    const response = await this.api.get('/admin/customers');
-    return response.data.customers || [];
+    const response = await this.api.get('/api/admin/customers');
+    return Array.isArray(response.data) ? response.data : response.data.customers || [];
   }
 
-  async addBook(book: Omit<Book, 'id'>): Promise<void> {
-    const formData = new FormData();
-    formData.append('title', book.title);
-    formData.append('author', book.author);
-    formData.append('genre', book.genre);
-    formData.append('available', book.available.toString());
-    
-    await this.api.post('/books/add', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+  async getCustomerById(userId: number): Promise<User> {
+    const response = await this.api.get(`/api/admin/customers/${userId}`);
+    return response.data;
   }
 
-  async updateBook(bookId: number, book: Partial<Book>): Promise<void> {
-    const formData = new FormData();
-    if (book.title) formData.append('title', book.title);
-    if (book.author) formData.append('author', book.author);
-    if (book.genre) formData.append('genre', book.genre);
-    if (book.available !== undefined) formData.append('available', book.available.toString());
-    
-    await this.api.post(`/books/admin/edit/${bookId}`, formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+  async deleteReservation(reservationId: number): Promise<{ message: string; status: string }> {
+    const response = await this.api.delete(`/api/admin/reservations/${reservationId}`);
+    return response.data;
   }
 
-  async deleteBook(bookId: number): Promise<void> {
-    await this.api.post(`/books/admin/delete/${bookId}`);
+  async getAllWaitingList(): Promise<WaitingList[]> {
+    const response = await this.api.get('/api/admin/waitinglist');
+    return response.data;
+  }
+
+  async getBookWaitingList(bookId: number): Promise<WaitingList[]> {
+    const response = await this.api.get(`/api/admin/books/${bookId}/waitinglist`);
+    return response.data;
+  }
+
+  async deleteWaitingEntry(entryId: number): Promise<{ message: string; status: string }> {
+    const response = await this.api.delete(`/api/admin/waitinglist/${entryId}`);
+    return response.data;
+  }
+
+  async getReservationForBook(bookId: number): Promise<Reservation | null> {
+    try {
+      const response = await this.api.get(`/api/books/${bookId}/reservation`);
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  //Customer APIs
+  async getMyReservations(): Promise<Reservation[]> {
+    const response = await this.api.get('/api/reservations/my');
+    return response.data;
+  }
+
+  async returnBook(bookId: number): Promise<void> {
+    await this.api.post(`/api/books/${bookId}/return`);
+  }
+
+  //
+  // Recommend API
+  async getRecommendations(): Promise<Book[]> {
+    const response = await this.api.get('/api/recommendations');
+    return Array.isArray(response.data) ? response.data : [];
+  }
+
+  // Chatbot APIs
+  async getChatbotHealth(): Promise<{ status: string; message?: string; service?: string; capabilities?: string }> {
+    try {
+      const response = await this.api.get('/api/chatbot/health');
+      return response.data;
+    } catch (error) {
+      return { status: 'error', message: 'Chatbot service unavailable' };
+    }
+  }
+
+  async sendChatMessage(message: string): Promise<{ response: string; user?: string; error?: string }> {
+    const response = await this.api.post('/api/chatbot/send', { message });
+    return response.data;
   }
 }
 
 export const apiService = new ApiService();
 export default apiService;
-

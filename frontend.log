@@ -3,77 +3,14 @@
 > vite
 
 
-  VITE v7.1.9  ready in 68 ms
+  VITE v7.1.9  ready in 70 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
-9:57:56 PM [vite] (client) warning: Duplicate member "submitReview" in class body
-156 |    }
-157 |  
-158 |    async submitReview(bookId: number, review: { rating: number; comment: string }): Promise<void> {
-    |          ^
-159 |      const formData = new FormData();
-160 |      formData.append('rating', review.rating.toString());
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
-9:57:56 PM [vite] (client) warning: Duplicate member "deleteReview" in class body
-168 |    }
-169 |  
-170 |    async deleteReview(bookId: number, reviewId: number): Promise<void> {
-    |          ^
-171 |      await this.api.post(`/books/${bookId}/reviews/${reviewId}/delete`);
-172 |    }
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
-9:57:56 PM [vite] (client) warning: Duplicate member "joinWaitingList" in class body
-173 |  
-174 |    // Waiting list endpoints
-175 |    async joinWaitingList(bookId: number): Promise<WaitingList> {
-    |          ^
-176 |      const response = await this.api.post(`/api/waitinglist/book/${bookId}`);
-177 |      return response.data;
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
-9:57:56 PM [vite] (client) warning: Duplicate member "cancelWaiting" in class body
-183 |    }
-184 |  
-185 |    async cancelWaiting(bookId: number): Promise<void> {
-    |          ^
-186 |      await this.api.delete(`/api/waitinglist/book/${bookId}`);
-187 |    }
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
-9:57:56 PM [vite] (client) warning: Duplicate member "addBook" in class body
-215 |    }
-216 |  
-217 |    async addBook(book: Omit<Book, 'id'>): Promise<void> {
-    |          ^
-218 |      const formData = new FormData();
-219 |      formData.append('title', book.title);
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
-9:57:56 PM [vite] (client) warning: Duplicate member "updateBook" in class body
-229 |    }
-230 |  
-231 |    async updateBook(bookId: number, book: Partial<Book>): Promise<void> {
-    |          ^
-232 |      const formData = new FormData();
-233 |      if (book.title) formData.append('title', book.title);
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
-9:57:56 PM [vite] (client) warning: Duplicate member "deleteBook" in class body
-243 |    }
-244 |  
-245 |    async deleteBook(bookId: number): Promise<void> {
-    |          ^
-246 |      await this.api.post(`/books/admin/delete/${bookId}`);
-247 |    }
-
-  Plugin: vite:esbuild
-  File: /Users/argon/Idea/ELEC5619/ELEC5619_Practical02_Group_11/libraryhub-frontend/src/services/api.ts
+4:56:33 PM [vite] (client) hmr update /src/pages/books/BookList.tsx, /src/index.css
+4:58:44 PM [vite] (client) hmr update /src/pages/books/BookList.tsx, /src/index.css
+5:01:20 PM [vite] (client) hmr update /src/pages/books/BookList.tsx, /src/index.css
+5:03:23 PM [vite] (client) hmr update /src/pages/books/BookList.tsx, /src/index.css
+5:05:25 PM [vite] (client) hmr update /src/pages/books/BookList.tsx, /src/index.css
+5:08:38 PM [vite] (client) hmr update /src/pages/books/BookList.tsx, /src/index.css
+5:21:30 PM [vite] (client) hmr update /src/pages/books/BookDetails.tsx, /src/index.css

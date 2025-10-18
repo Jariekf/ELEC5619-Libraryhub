@@ -25,63 +25,77 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    /** Password encoder for hashing user passwords. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /** Bridge AuthenticationManager out of Spring Boot auto config. */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
     }
 
-    /** Load user from database and map to Spring Security UserDetails. */
     @Bean
     public UserDetailsService userDetailsService() {
         return (String loginIdentifier) -> {
             User u = userRepository.findByUsername(loginIdentifier)
                     .or(() -> userRepository.findByEmail(loginIdentifier))
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + loginIdentifier));
-            // Set authorities by role; here we use ADMIN for Admin subclass, otherwise
-            // CUSTOMER
             String role = (u instanceof Admin) ? "ADMIN" : "CUSTOMER";
             UserDetails details = org.springframework.security.core.userdetails.User
                     .withUsername(u.getUsername())
-                    .password(u.getPasswordHash()) // ensure your User has getPasswordHash()
-                    .roles(role) // results in "ROLE_ADMIN"/"ROLE_CUSTOMER"
+                    .password(u.getPasswordHash())
+                    .roles(role)
                     .disabled(!u.isActive())
                     .build();
             return details;
         };
     }
 
-    /**
-     * HTTP security: allow auth pages, require login elsewhere, enable form login +
-     * logout.
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                // Disable CSRF only for API endpoints (REST API), keep it enabled for MVC endpoints (HTML forms)
                 .csrf(csrf -> csrf.ignoringRequestMatchers(
-                        "/auth/**",           // Login/Register forms
-                        "/api/chatbot/**",    // Chatbot API
-                        "/api/books/**",      // Book REST API
-                        "/api/user/**"        // User REST API
+                        "/auth/**",
+                        "/api/**",
+                        "/chatbot/**"
                 ))
                 .authorizeHttpRequests(reg -> reg
+                        // Public endpoints
                         .requestMatchers("/", "/auth/**", "/css/**", "/js/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
+
+                        // API - Books (public read, admin write)
+                        .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/books/search").permitAll()
+
+                        // API - Admin operations
                         .requestMatchers(HttpMethod.POST, "/api/books/add").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/books/*/edit").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/books/*/delete").hasRole("ADMIN")
-                        .requestMatchers("/books", "/books/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/admin/books/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // API - User operations
                         .requestMatchers("/api/user/current").authenticated()
+
+                        // API - Reviews
+                        .requestMatchers(HttpMethod.POST, "/api/books/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+
+                        // API - Reservations (allow both CUSTOMER and ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/books/*/reserve").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/*/reserve").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // API - Waiting List (allow both CUSTOMER and ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/books/*/waitinglist").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/*/waitinglist").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // API - Chatbot
                         .requestMatchers("/api/chatbot/**", "/chat", "/chatbot/**").authenticated()
+
+                        // MVC endpoints (Thymeleaf)
+                        .requestMatchers("/books", "/books/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/books/*/reserve").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/books/*/reviews").authenticated()
                         .requestMatchers(HttpMethod.POST, "/books/*/reviews/*/delete").authenticated()
@@ -91,14 +105,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/books/admin/delete/*").hasRole("ADMIN")
                         .requestMatchers("/customer/**").hasRole("CUSTOMER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/auth/login").permitAll()
-                        .loginProcessingUrl("/auth/login") // POST endpoint handled by Spring
+                        .loginProcessingUrl("/auth/login")
                         .defaultSuccessUrl("/books", true)
                         .failureUrl("/auth/login?error"))
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout") // POST /auth/logout
+                        .logoutUrl("/auth/logout")
                         .logoutSuccessUrl("/auth/login?logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")

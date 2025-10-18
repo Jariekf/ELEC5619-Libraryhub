@@ -1,11 +1,17 @@
 package com.example.libraryhub.controller;
 
+import com.example.libraryhub.dto.BookDTO;
 import com.example.libraryhub.model.Book;
 import com.example.libraryhub.service.BookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
@@ -16,47 +22,106 @@ public class BookRestController {
     private final BookService bookService;
 
     @GetMapping
-    public List<Book> getAllBooks() {
-        return bookService.getAllBooks();
+    public ResponseEntity<List<BookDTO>> getAllBooks() {
+        List<Book> books = bookService.getAllBooks();
+        List<BookDTO> bookDTOs = books.stream()
+                .map(BookDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(bookDTOs);
     }
 
     @GetMapping("/{id}")
-    public Book getBookById(@PathVariable Long id) {
-        return bookService.getBookById(id);
+    public ResponseEntity<BookDTO> getBookById(@PathVariable Long id) {
+        Book book = bookService.getBookById(id);
+        if (book == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(BookDTO.fromEntity(book));
     }
 
     @PostMapping("/search")
-    public List<Book> searchBooks(@RequestParam String title) {
-        return bookService.searchByTitle(title);
+    public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam String title) {
+        List<Book> books = bookService.searchByTitle(title);
+        List<BookDTO> bookDTOs = books.stream()
+                .map(BookDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(bookDTOs);
     }
 
     @PostMapping("/add")
-    public Book addBook(@RequestParam String title,
-                       @RequestParam String author,
-                       @RequestParam String genre,
-                       @RequestParam(defaultValue = "true") boolean available) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BookDTO> addBook(@RequestParam String title,
+                                           @RequestParam String author,
+                                           @RequestParam String genre,
+                                           @RequestParam(defaultValue = "true") boolean available) {
         Book book = new Book(title, author, genre);
         book.setAvailable(available);
-        return bookService.saveBook(book);
+        Book savedBook = bookService.saveBook(book);
+        return ResponseEntity.ok(BookDTO.fromEntity(savedBook));
     }
 
     @PostMapping("/{id}/edit")
-    public Book updateBook(@PathVariable Long id, 
-                          @RequestParam String title,
-                          @RequestParam String author,
-                          @RequestParam String genre,
-                          @RequestParam boolean available) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BookDTO> updateBook(@PathVariable Long id,
+                                              @RequestParam String title,
+                                              @RequestParam String author,
+                                              @RequestParam String genre,
+                                              @RequestParam boolean available) {
         Book book = bookService.getBookById(id);
+        if (book == null) {
+            return ResponseEntity.notFound().build();
+        }
         book.setTitle(title);
         book.setAuthor(author);
         book.setGenre(genre);
         book.setAvailable(available);
-        return bookService.saveBook(book);
+        Book updatedBook = bookService.saveBook(book);
+        return ResponseEntity.ok(BookDTO.fromEntity(updatedBook));
     }
 
     @PostMapping("/{id}/delete")
-    public void deleteBook(@PathVariable Long id) {
-        bookService.deleteBook(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> deleteBook(@PathVariable Long id) {
+        Book book = bookService.getBookById(id);
+        if (book == null) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Book not found");
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            bookService.deleteBook(id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Book deleted successfully");
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to delete book");
+            error.put("status", "error");
+            return ResponseEntity.internalServerError().body(error);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> deleteBookRestful(@PathVariable Long id) {
+        Book book = bookService.getBookById(id);
+        if (book == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            bookService.deleteBook(id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Book deleted successfully");
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to delete book");
+            error.put("status", "error");
+            return ResponseEntity.internalServerError().body(error);
+        }
     }
 }
-

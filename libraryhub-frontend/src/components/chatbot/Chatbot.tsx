@@ -1,39 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import apiService from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { apiService } from '../../services/api';
 
-interface ChatMessage {
+interface Message {
   id: string;
-  message: string;
-  response: string;
-  user: string;
-  timestamp: string;
+  content: string;
+  isUser: boolean;
+  timestamp: Date;
 }
 
 const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const exampleQueries = [
-    "What are your library hours?",
-    "Find books by J.K. Rowling",
-    "Recommend a fantasy series",
-    "How do I reserve a book?",
-    "What's the fine policy?"
-  ];
-
   useEffect(() => {
     checkConnection();
-    // Add welcome message
-    setMessages([{
-      id: '1',
-      message: '',
-      response: "Hello! I'm your LibraryHub AI assistant. I can help you with book searches, library policies, recommendations, and more. How can I assist you today?",
-      user: 'assistant',
-      timestamp: new Date().toISOString()
-    }]);
+    addInitialMessage();
   }, []);
 
   useEffect(() => {
@@ -42,202 +28,352 @@ const Chatbot: React.FC = () => {
 
   const checkConnection = async () => {
     try {
-      await apiService.getChatbotHealth();
-      setIsConnected(true);
+      const health = await apiService.getChatbotHealth();
+      setIsConnected(health.status === 'healthy' || health.status === 'ok');
     } catch (error) {
       setIsConnected(false);
-      console.error('Chatbot connection failed:', error);
     }
+  };
+
+  const addInitialMessage = () => {
+    const initialMessage: Message = {
+      id: '0',
+      content: "Hello! I'm your LibraryHub AI assistant. How can I help you today?",
+      isUser: false,
+      timestamp: new Date()
+    };
+    setMessages([initialMessage]);
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const sendMessage = async (message: string) => {
-    if (!message.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
+  const addMessage = (content: string, isUser: boolean) => {
+    const newMessage: Message = {
       id: Date.now().toString(),
-      message: message.trim(),
-      response: '',
-      user: 'user',
-      timestamp: new Date().toISOString()
+      content,
+      isUser,
+      timestamp: new Date()
     };
+    setMessages(prev => [...prev, newMessage]);
+  };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
+  const sendMessage = async (messageText?: string) => {
+    const message = messageText || inputValue.trim();
+    if (!message) return;
+
+    addMessage(message, true);
+    setInputValue('');
+    setIsTyping(true);
 
     try {
-      const response = await apiService.sendChatMessage(message.trim());
-      
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        message: '',
-        response: response.response,
-        user: 'assistant',
-        timestamp: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        message: '',
-        response: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact support if the issue persists.",
-        user: 'assistant',
-        timestamp: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, errorMessage]);
+      const response = await apiService.sendChatMessage(message);
+      addMessage(response.response || 'Sorry, I could not process your request.', false);
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      addMessage('Sorry, there was an error connecting to the AI service. Please try again later.', false);
     } finally {
-      setIsLoading(false);
+      setIsTyping(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    sendMessage(inputMessage);
+    sendMessage();
   };
 
-  const handleExampleClick = (example: string) => {
-    sendMessage(example);
-  };
-
-  const clearChat = () => {
-    setMessages([{
-      id: '1',
-      message: '',
-      response: "Hello! I'm your LibraryHub AI assistant. I can help you with book searches, library policies, recommendations, and more. How can I assist you today?",
-      user: 'assistant',
-      timestamp: new Date().toISOString()
-    }]);
-  };
+  const quickActions = [
+    { icon: '📚', text: 'How do I reserve a book?', message: 'How do I reserve a book?' },
+    { icon: '📖', text: 'Available books', message: 'What books are available?' },
+    { icon: '⏳', text: 'Waiting list', message: 'How does the waiting list work?' },
+    { icon: '💡', text: 'Recommend', message: 'Recommend a good book' }
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200 h-[600px] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-blue-50">
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
-            <span className="text-white text-lg">🤖</span>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">AI Assistant</h2>
-            <div className="flex items-center space-x-2">
-              <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-sm text-gray-600">
-                {isConnected ? 'Online' : 'Offline'}
-              </span>
-            </div>
-          </div>
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f3f4f6',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Header */}
+        <div style={{
+          backgroundColor: '#1f2937',
+          color: 'white',
+          padding: '1rem 2rem',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <h1 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            🤖 AI Assistant
+          </h1>
         </div>
+
+        {/* Back Link */}
         <button
-          onClick={clearChat}
-          className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100"
+            onClick={() => navigate('/books')}
+            style={{
+              margin: '1rem 2rem',
+              color: '#3b82f6',
+              background: 'none',
+              border: 'none',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              textAlign: 'left',
+              padding: 0
+            }}
         >
-          Clear Chat
+          ← Back to Library
         </button>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.user === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.user === 'user'
-                  ? 'bg-library-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
-              }`}
-            >
-              {message.user === 'user' ? (
-                <div className="flex items-start space-x-2">
-                  <span className="text-sm">👤</span>
-                  <div>
-                    <p className="text-sm">{message.message}</p>
-                    <p className="text-xs opacity-75 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
-                    </p>
+        {/* Chat Container */}
+        <div style={{
+          flex: 1,
+          maxWidth: '1200px',
+          width: '100%',
+          margin: '0 auto 2rem',
+          padding: '0 1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            flex: 1,
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            {/* Chat Header */}
+            <div style={{
+              padding: '1.5rem',
+              borderBottom: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb'
+            }}>
+              <h2 style={{
+                fontSize: '1.25rem',
+                color: '#1f2937',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                LibraryHub Assistant
+                <span style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: isConnected ? '#10b981' : '#ef4444',
+                  marginLeft: '0.5rem'
+                }} />
+              </h2>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                margin: '0.5rem 0 0 0'
+              }}>
+                Ask me anything about books, reservations, or the library!
+              </p>
+            </div>
+
+            {/* Messages */}
+            <div style={{
+              flex: 1,
+              padding: '1.5rem',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              {messages.map((msg) => (
+                  <div
+                      key={msg.id}
+                      style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        maxWidth: '80%',
+                        alignSelf: msg.isUser ? 'flex-end' : 'flex-start',
+                        flexDirection: msg.isUser ? 'row-reverse' : 'row',
+                        animation: 'fadeIn 0.3s ease-in'
+                      }}
+                  >
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: msg.isUser ? '#3b82f6' : '#10b981',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      flexShrink: 0
+                    }}>
+                      {msg.isUser ? '👤' : '🤖'}
+                    </div>
+                    <div>
+                      <div style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '12px',
+                        backgroundColor: msg.isUser ? '#3b82f6' : '#f3f4f6',
+                        color: msg.isUser ? 'white' : '#1f2937',
+                        wordWrap: 'break-word'
+                      }}>
+                        {msg.content}
+                      </div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#6b7280',
+                        marginTop: '0.25rem'
+                      }}>
+                        {msg.timestamp.toLocaleTimeString()}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-start space-x-2">
-                  <span className="text-sm">🤖</span>
-                  <div>
-                    <p className="text-sm whitespace-pre-wrap">{message.response}</p>
-                    <p className="text-xs opacity-75 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
-                    </p>
+              ))}
+
+              {/* Typing Indicator */}
+              {isTyping && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                    padding: '1rem'
+                  }}>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#9ca3af',
+                      animation: 'bounce 1.4s infinite ease-in-out'
+                    }} />
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#9ca3af',
+                      animation: 'bounce 1.4s infinite ease-in-out 0.16s'
+                    }} />
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#9ca3af',
+                      animation: 'bounce 1.4s infinite ease-in-out 0.32s'
+                    }} />
+                    <span style={{ marginLeft: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
+                  AI is thinking...
+                </span>
                   </div>
-                </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
-          </div>
-        ))}
-        
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-900 max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">🤖</span>
-                <div className="flex items-center space-x-1">
-                  <span className="animate-spin">⏳</span>
-                  <span className="text-sm">Thinking...</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
 
-      {/* Example queries */}
-      {messages.length === 1 && (
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-600 mb-3">Try asking me:</p>
-          <div className="flex flex-wrap gap-2">
-            {exampleQueries.map((query, index) => (
-              <button
-                key={index}
-                onClick={() => handleExampleClick(query)}
-                className="text-xs bg-white text-gray-700 px-3 py-1 rounded-full border border-gray-300 hover:bg-library-50 hover:border-library-300 transition-colors"
-              >
-                {query}
-              </button>
-            ))}
+            {/* Input Area */}
+            <div style={{
+              padding: '1.5rem',
+              borderTop: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb'
+            }}>
+              {/* Quick Actions */}
+              <div style={{
+                display: 'flex',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+                marginBottom: '1rem'
+              }}>
+                {quickActions.map((action, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => sendMessage(action.message)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6';
+                          e.currentTarget.style.borderColor = '#3b82f6';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = 'white';
+                          e.currentTarget.style.borderColor = '#d1d5db';
+                        }}
+                    >
+                      {action.icon} {action.text}
+                    </button>
+                ))}
+              </div>
+
+              {/* Input Form */}
+              <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '1rem' }}>
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Type your message..."
+                    autoComplete="off"
+                    style={{
+                      flex: 1,
+                      padding: '0.75rem 1rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
+                />
+                <button
+                    type="submit"
+                    disabled={isTyping || !inputValue.trim()}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: isTyping || !inputValue.trim() ? '#9ca3af' : '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      cursor: isTyping || !inputValue.trim() ? 'not-allowed' : 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseOver={(e) => {
+                      if (!isTyping && inputValue.trim()) {
+                        e.currentTarget.style.backgroundColor = '#2563eb';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!isTyping && inputValue.trim()) {
+                        e.currentTarget.style.backgroundColor = '#3b82f6';
+                      }
+                    }}
+                >
+                  Send 📤
+                </button>
+              </form>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Input */}
-      <div className="p-4 border-t border-gray-200">
-        <form onSubmit={handleSubmit} className="flex space-x-2">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Ask me anything about the library..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-library-500 focus:border-library-500"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={!inputMessage.trim() || isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? '⏳' : '📤'}
-          </button>
-        </form>
+        <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1); }
+        }
+      `}</style>
       </div>
-    </div>
   );
 };
 
 export default Chatbot;
-

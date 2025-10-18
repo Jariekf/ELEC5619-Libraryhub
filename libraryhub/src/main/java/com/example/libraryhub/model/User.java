@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Abstract base user that holds common attributes and behaviors.
@@ -45,6 +46,7 @@ public abstract class User {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Reservation> reservations = new ArrayList<>();
 
     public User(Long id, String username, String email, String passwordHash, boolean active, LocalDateTime createdAt) {
