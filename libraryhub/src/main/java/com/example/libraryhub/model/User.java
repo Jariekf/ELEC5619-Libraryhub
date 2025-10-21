@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * Abstract base user that holds common attributes and behaviors.
  * Lombok generates getters/setters/equals/hashCode/toString.
+ * Users are extended into specific roles via single-table inheritance.
  */
 @Getter
 @Setter
