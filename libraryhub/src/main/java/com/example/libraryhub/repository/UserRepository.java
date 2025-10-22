@@ -22,4 +22,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query(value = "UPDATE users SET role = :role WHERE id = :id", nativeQuery = true)
     void updateUserRole(@Param("id") Long id, @Param("role") String role);
+
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.reservations WHERE u.role = 'CUSTOMER'")
+    List<User> findAllCustomersWithReservations();
 }
