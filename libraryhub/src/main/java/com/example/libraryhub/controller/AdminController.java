@@ -1,9 +1,13 @@
 package com.example.libraryhub.controller;
 
+import com.example.libraryhub.model.Role;
+import com.example.libraryhub.model.User;
 import com.example.libraryhub.service.BookService;
 import com.example.libraryhub.service.ReservationService;
-import com.example.libraryhub.repository.UserRepository; // Assuming you have this from previous context
+import com.example.libraryhub.repository.UserRepository;
 import com.example.libraryhub.service.WaitingListService;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -37,7 +41,10 @@ public class AdminController {
 
     @GetMapping("/customers")
     public String listCustomers(Model model) {
-        model.addAttribute("customers", userRepository.findAllCustomersWithReservations());
+        List<User> customers = userRepository.findAll().stream()
+                .filter(user -> user.getRole() == Role.CUSTOMER)
+                .collect(Collectors.toList());
+        model.addAttribute("customers", customers);
         return "admin/customers";
     }
 
