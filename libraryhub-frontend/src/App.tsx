@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
@@ -89,7 +89,21 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const HomePage: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div className="homepage-background">
+                <div className="homepage-overlay">
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="homepage-background">
@@ -100,7 +114,7 @@ const HomePage: React.FC = () => {
                             Welcome to LibraryHub
                         </h1>
                         <p className="homepage-subtitle">
-                            Discover, reserve, and review books in our digital library.
+                            Discover, reserve, and review books in our library.
                         </p>
                         <div className="homepage-buttons">
                             {isAuthenticated ? (
@@ -124,7 +138,7 @@ const HomePage: React.FC = () => {
                                         href="/register"
                                         className="homepage-btn homepage-btn-primary"
                                     >
-                                        Get Started
+                                        Sign Up
                                     </a>
                                     <a
                                         href="/login"
@@ -137,143 +151,123 @@ const HomePage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="homepage-stats">
-                        <div className="homepage-stat">
-                            <div className="homepage-stat-number">10K+</div>
-                            <div className="homepage-stat-label">Books</div>
-                        </div>
-                        <div className="homepage-stat">
-                            <div className="homepage-stat-number">5K+</div>
-                            <div className="homepage-stat-label">Users</div>
-                        </div>
-                        <div className="homepage-stat">
-                            <div className="homepage-stat-number">50+</div>
-                            <div className="homepage-stat-label">Categories</div>
-                        </div>
-                        <div className="homepage-stat">
-                            <div className="homepage-stat-number">24/7</div>
-                            <div className="homepage-stat-label">Access</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-const AppContent: React.FC = () => {
-    const location = window.location.pathname;
-    const hideNavbar = location === '/login' || location === '/register' || location === '/';
+const AppRoutes: React.FC = () => {
+    const location = useLocation();
+    const hideNavbar = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/';
 
     return (
-        <Router>
-            <div className="min-h-screen bg-gray-50">
-                {!hideNavbar && <Navbar />}
-                <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/login" element={<LoginForm />} />
-                    <Route path="/register" element={<RegisterForm />} />
+        <div className="min-h-screen bg-gray-50">
+            {!hideNavbar && <Navbar />}
+            <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginForm />} />
+                <Route path="/register" element={<RegisterForm />} />
 
-                    <Route path="/books" element={<BookList />} />
-                    <Route
-                        path="/books/:id"
-                        element={
-                            <ProtectedRoute>
-                                <BookDetails />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/books/add"
-                        element={
-                            <AdminRoute>
-                                <AddBook />
-                            </AdminRoute>
-                        }
-                    />
-                    <Route
-                        path="/books/edit/:id"
-                        element={
-                            <AdminRoute>
-                                <EditBook />
-                            </AdminRoute>
-                        }
-                    />
+                <Route path="/books" element={<BookList />} />
+                <Route
+                    path="/books/:id"
+                    element={
+                        <ProtectedRoute>
+                            <BookDetails />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/books/add"
+                    element={
+                        <AdminRoute>
+                            <AddBook />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/books/edit/:id"
+                    element={
+                        <AdminRoute>
+                            <EditBook />
+                        </AdminRoute>
+                    }
+                />
 
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <ProtectedRoute>
-                                <CustomerDashboard />
-                            </ProtectedRoute>
-                        }
-                    />
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <CustomerDashboard />
+                        </ProtectedRoute>
+                    }
+                />
 
-                    <Route
-                        path="/profile"
-                        element={
-                            <ProtectedRoute>
-                                <ProfilePage />
-                            </ProtectedRoute>
-                        }
-                    />
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <ProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
 
-                    <Route
-                        path="/chatbot"
-                        element={
-                            <div className="min-h-screen bg-gray-50 py-8">
-                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                                    <Chatbot />
-                                </div>
+                <Route
+                    path="/chatbot"
+                    element={
+                        <div className="min-h-screen bg-gray-50 py-8">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <Chatbot />
                             </div>
-                        }
-                    />
+                        </div>
+                    }
+                />
 
-                    <Route
-                        path="/admin"
-                        element={
-                            <AdminRoute>
-                                <Navigate to="/admin/dashboard" replace />
-                            </AdminRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/dashboard"
-                        element={
-                            <AdminRoute>
-                                <Dashboard />
-                            </AdminRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/users"
-                        element={
-                            <AdminRoute>
-                                <ManageUsers />
-                            </AdminRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/reservations"
-                        element={
-                            <AdminRoute>
-                                <Reservations />
-                            </AdminRoute>
-                        }
-                    />
-                    <Route
-                        path="/admin/waitinglist"
-                        element={
-                            <AdminRoute>
-                                <ManageWaitingList />
-                            </AdminRoute>
-                        }
-                    />
+                <Route
+                    path="/admin"
+                    element={
+                        <AdminRoute>
+                            <Navigate to="/admin/dashboard" replace />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/dashboard"
+                    element={
+                        <AdminRoute>
+                            <Dashboard />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/users"
+                    element={
+                        <AdminRoute>
+                            <ManageUsers />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/reservations"
+                    element={
+                        <AdminRoute>
+                            <Reservations />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/waitinglist"
+                    element={
+                        <AdminRoute>
+                            <ManageWaitingList />
+                        </AdminRoute>
+                    }
+                />
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </div>
-        </Router>
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </div>
     );
 };
 
@@ -299,7 +293,9 @@ const App: React.FC = () => {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
-                <AppContent />
+                <Router>
+                    <AppRoutes />
+                </Router>
             </AuthProvider>
         </QueryClientProvider>
     );

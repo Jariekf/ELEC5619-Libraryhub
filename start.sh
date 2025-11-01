@@ -96,25 +96,25 @@ echo "  Backend:  tail -f backend.log"
 echo "  Frontend: tail -f frontend.log"
 echo "=========================================="
 
-# Open login page in browser
+# Open application in browser
 echo ""
-echo "Opening login page in browser..."
+echo "Opening application in browser..."
 sleep 2
 
 # Detect OS and open browser
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
-    open http://localhost:5173/login
+    open http://localhost:5173
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux
     if command -v xdg-open > /dev/null; then
-        xdg-open http://localhost:5173/login
+        xdg-open http://localhost:5173
     elif command -v gnome-open > /dev/null; then
-        gnome-open http://localhost:5173/login
+        gnome-open http://localhost:5173
     fi
 elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
     # Windows
-    start http://localhost:5173/login
+    start http://localhost:5173
 fi
 
 echo "✓ Browser opened"
