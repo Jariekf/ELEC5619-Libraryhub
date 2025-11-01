@@ -16,8 +16,8 @@ import AddBook from './pages/books/AddBook';
 import EditBook from './pages/books/EditBook';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import ProfilePage from './components/profile/ProfilePage';
+import './HomePage.css';
 
-// Load Bootstrap JS dynamically
 const loadBootstrap = () => {
     if ((window as any).bootstrap) {
         return Promise.resolve();
@@ -92,47 +92,68 @@ const HomePage: React.FC = () => {
     const { isAuthenticated } = useAuth();
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                        Welcome to LibraryHub
-                    </h1>
-                    <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                        Discover, reserve, and review books in our digital library.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        {isAuthenticated ? (
-                            <>
-                                <a
-                                    href="/books"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 text-lg"
-                                >
-                                    Browse Books
-                                </a>
-                                <a
-                                    href="/chatbot"
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-8 rounded-lg transition-colors duration-200 text-lg"
-                                >
-                                    AI Assistant
-                                </a>
-                            </>
-                        ) : (
-                            <>
-                                <a
-                                    href="/register"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 text-lg"
-                                >
-                                    Get Started
-                                </a>
-                                <a
-                                    href="/login"
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-8 rounded-lg transition-colors duration-200 text-lg"
-                                >
-                                    Sign In
-                                </a>
-                            </>
-                        )}
+        <div className="homepage-background">
+            <div className="homepage-overlay">
+                <div className="homepage-content">
+                    <div className="homepage-hero">
+                        <h1 className="homepage-title">
+                            Welcome to LibraryHub
+                        </h1>
+                        <p className="homepage-subtitle">
+                            Discover, reserve, and review books in our digital library.
+                        </p>
+                        <div className="homepage-buttons">
+                            {isAuthenticated ? (
+                                <>
+                                    <a
+                                        href="/books"
+                                        className="homepage-btn homepage-btn-primary"
+                                    >
+                                        Browse Books
+                                    </a>
+                                    <a
+                                        href="/chatbot"
+                                        className="homepage-btn homepage-btn-secondary"
+                                    >
+                                        AI Assistant
+                                    </a>
+                                </>
+                            ) : (
+                                <>
+                                    <a
+                                        href="/register"
+                                        className="homepage-btn homepage-btn-primary"
+                                    >
+                                        Get Started
+                                    </a>
+                                    <a
+                                        href="/login"
+                                        className="homepage-btn homepage-btn-secondary"
+                                    >
+                                        Sign In
+                                    </a>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="homepage-stats">
+                        <div className="homepage-stat">
+                            <div className="homepage-stat-number">10K+</div>
+                            <div className="homepage-stat-label">Books</div>
+                        </div>
+                        <div className="homepage-stat">
+                            <div className="homepage-stat-number">5K+</div>
+                            <div className="homepage-stat-label">Users</div>
+                        </div>
+                        <div className="homepage-stat">
+                            <div className="homepage-stat-number">50+</div>
+                            <div className="homepage-stat-label">Categories</div>
+                        </div>
+                        <div className="homepage-stat">
+                            <div className="homepage-stat-number">24/7</div>
+                            <div className="homepage-stat-label">Access</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,19 +163,17 @@ const HomePage: React.FC = () => {
 
 const AppContent: React.FC = () => {
     const location = window.location.pathname;
-    const hideNavbar = location === '/login' || location === '/register';
+    const hideNavbar = location === '/login' || location === '/register' || location === '/';
 
     return (
         <Router>
             <div className="min-h-screen bg-gray-50">
                 {!hideNavbar && <Navbar />}
                 <Routes>
-                    {/* Public Routes */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LoginForm />} />
                     <Route path="/register" element={<RegisterForm />} />
 
-                    {/* Book Routes - BookList public, BookDetails protected */}
                     <Route path="/books" element={<BookList />} />
                     <Route
                         path="/books/:id"
@@ -181,7 +200,6 @@ const AppContent: React.FC = () => {
                         }
                     />
 
-                    {/* User Dashboard - Customer Reservations */}
                     <Route
                         path="/dashboard"
                         element={
@@ -200,7 +218,6 @@ const AppContent: React.FC = () => {
                         }
                     />
 
-                    {/* Chatbot - Public access */}
                     <Route
                         path="/chatbot"
                         element={
@@ -212,7 +229,6 @@ const AppContent: React.FC = () => {
                         }
                     />
 
-                    {/* Admin Routes - All protected */}
                     <Route
                         path="/admin"
                         element={
@@ -254,7 +270,6 @@ const AppContent: React.FC = () => {
                         }
                     />
 
-                    {/* Catch-all redirect */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </div>

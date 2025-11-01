@@ -1,0 +1,157 @@
+.homepage-background {
+    background-image: url('./assets/library_background_1.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.homepage-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.homepage-content {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.homepage-hero {
+    text-align: center;
+    padding: 4rem 0;
+    margin-bottom: 4rem;
+}
+
+.homepage-title {
+    font-size: 4rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.homepage-subtitle {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2.5rem;
+    max-width: 42rem;
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.homepage-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.homepage-btn {
+    padding: 0.75rem 2rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    display: inline-block;
+}
+
+.homepage-btn-primary {
+    background-color: #2563eb;
+    color: white;
+}
+
+.homepage-btn-primary:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.homepage-btn-secondary {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+
+.homepage-btn-secondary:hover {
+    background-color: #d1d5db;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.homepage-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 4rem;
+    text-align: center;
+}
+
+.homepage-stat {
+    color: white;
+}
+
+.homepage-stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 0.5rem;
+}
+
+.homepage-stat-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+    .homepage-background {
+        background-attachment: scroll;
+    }
+
+    .homepage-content {
+        padding: 1rem;
+    }
+
+    .homepage-title {
+        font-size: 2.5rem;
+    }
+
+    .homepage-subtitle {
+        font-size: 1.25rem;
+    }
+
+    .homepage-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .homepage-btn {
+        width: 100%;
+    }
+
+    .homepage-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .homepage-title {
+        font-size: 2rem;
+    }
+
+    .homepage-stat-number {
+        font-size: 2rem;
+    }
+}
