@@ -4,10 +4,10 @@
 
 Before starting the application, ensure you have:
 
-- ✅ **Java 17+** installed
-- ✅ **Node.js 16+** and npm installed
-- ✅ **MySQL** running on port 3306
-- ✅ **Maven** (included via mvnw wrapper)
+-  **Java 17+** installed
+-  **Node.js 16+** and npm installed
+-  **MySQL** running on port 3306
+-  **Maven** (included via mvnw wrapper)
 
 ## Database Setup
 
